@@ -102,6 +102,23 @@ test('manual call start stores phone in session for create form', function (): v
         ->assertSee('1133334444', false);
 });
 
+test('operational bridge accepts Laravel broadcast socket extra argument', function (): void {
+    /** @var User $central */
+    $central = User::query()->where('email', 'central@example.com')->firstOrFail();
+
+    Livewire::actingAs($central)
+        ->test(OperationalCallIntakeBridge::class)
+        ->call(
+            'openOperationalCallIntakeFromBroadcast',
+            form_url: 'https://example.test/signed',
+            phone: '11888877777',
+            expires_at: now()->addMinutes(30)->toIso8601String(),
+            socket: 'mock-socket-id',
+        )
+        ->assertSet('callIntakePrefill.phone', '11888877777')
+        ->assertSet('showCallIntakeModal', true);
+});
+
 test('operational bridge normalizes numeric phone from echo-shaped payload', function (): void {
     /** @var User $central */
     $central = User::query()->where('email', 'central@example.com')->firstOrFail();

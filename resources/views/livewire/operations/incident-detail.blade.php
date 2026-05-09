@@ -1,5 +1,15 @@
 @php
+    use App\Domain\Operations\Enums\IncidentStatus;
     use App\Support\Operations\TimelineEventLabels;
+
+    $statusBadgeColor = match ($incident->status) {
+        IncidentStatus::Open => 'blue',
+        IncidentStatus::Dispatched, IncidentStatus::InProgress => 'cyan',
+        IncidentStatus::PendingNurseReport => 'amber',
+        IncidentStatus::Closed => 'zinc',
+        IncidentStatus::Qta => 'orange',
+        IncidentStatus::Cancelled => 'red',
+    };
 @endphp
 
 <div class="cco-page-gap" wire:poll.30s="refreshOperationalState">
@@ -15,7 +25,7 @@
             </flux:heading>
             <flux:text class="mt-1">{{ $incident->occurred_at->format('d/m/Y H:i:s') }}</flux:text>
         </div>
-        <flux:badge color="blue" size="lg">{{ $incident->status->label() }}</flux:badge>
+        <flux:badge color="{{ $statusBadgeColor }}" size="lg">{{ $incident->status->label() }}</flux:badge>
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">
@@ -43,6 +53,48 @@
         </flux:card>
     @endif
 
+    <flux:card class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <flux:subheading>{{ __('Vítimas') }} ({{ $incident->victims->count() }})</flux:subheading>
+            @can('recordVictim', $incident)
+                <flux:button size="sm" variant="primary" icon="user-plus" :href="route('operations.incidents.victims.create', $incident)" wire:navigate>
+                    {{ __('Registrar vítima') }}
+                </flux:button>
+            @endcan
+        </div>
+        @if ($incident->victims->isEmpty())
+            <flux:text size="sm" class="text-zinc-500">{{ __('Nenhuma vítima registrada.') }}</flux:text>
+        @else
+            <ul class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                @foreach ($incident->victims as $v)
+                    <li wire:key="vic-{{ $v->id }}" class="flex flex-wrap items-center justify-between gap-2 py-3">
+                        <div>
+                            <flux:text class="font-medium">{{ $v->name ?: __('Sem nome') }}</flux:text>
+                            <flux:text size="sm" class="text-zinc-500">
+                                {{ __('Situação') }}:
+                                @if ((int) $v->situacao === 1)
+                                    {{ __('Atendida') }}
+                                @elseif ((int) $v->situacao === 3)
+                                    {{ __('Recusa') }}
+                                @else
+                                    —
+                                @endif
+                                @if ($v->age)
+                                    · {{ $v->age }} {{ __('anos') }}
+                                @endif
+                            </flux:text>
+                        </div>
+                        @can('update', $v)
+                            <flux:button size="sm" variant="ghost" :href="route('operations.incidents.victims.edit', [$incident, $v])" wire:navigate>
+                                {{ __('Editar') }}
+                            </flux:button>
+                        @endcan
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </flux:card>
+
     @if ($activeDispatch)
         <flux:card class="border-s-4 border-s-blue-500 dark:border-s-blue-400">
             <flux:subheading>{{ __('Despacho ativo') }}</flux:subheading>
@@ -63,6 +115,40 @@
             @endif
         </flux:card>
     @endif
+
+    @can('fillNurseReport', $incident)
+        <flux:card class="border-s-4 border-s-teal-500 dark:border-s-teal-400">
+            <flux:subheading>{{ __('Relatório de enfermagem') }}</flux:subheading>
+            @if ($incident->nurseReport)
+                <flux:text size="sm" class="mt-2 text-zinc-600 dark:text-zinc-400">
+                    {{ __('Registrado por :nome em :data.', [
+                        'nome' => $incident->nurseReport->filledBy?->name ?? '—',
+                        'data' => $incident->nurseReport->submitted_at->format('d/m/Y H:i'),
+                    ]) }}
+                </flux:text>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <flux:button variant="ghost" size="sm" icon="document-text" :href="route('operations.incidents.nurse-report', $incident)" wire:navigate>
+                        {{ __('Editar relatório') }}
+                    </flux:button>
+                </div>
+            @else
+                @if ($incident->status === IncidentStatus::PendingNurseReport)
+                    <flux:callout variant="warning" class="mt-3">
+                        {{ __('A unidade retornou à base. A ocorrência permanece pendente até o envio deste relatório.') }}
+                    </flux:callout>
+                @else
+                    <flux:callout variant="warning" class="mt-3">
+                        {{ __('Complete o relatório assistencial desta ocorrência.') }}
+                    </flux:callout>
+                @endif
+                <div class="mt-4">
+                    <flux:button variant="primary" size="sm" icon="document-plus" :href="route('operations.incidents.nurse-report', $incident)" wire:navigate>
+                        {{ __('Preencher relatório') }}
+                    </flux:button>
+                </div>
+            @endif
+        </flux:card>
+    @endcan
 
     <flux:card>
         <flux:subheading class="mb-4">{{ __('Marcos horários operacionais') }}</flux:subheading>

@@ -27,6 +27,7 @@ final class OperationalCallIntakeBridge extends Component
     {
         $this->showCallIntakeModal = false;
         $this->callIntakePrefill = [];
+        session()->forget('operations.call_intake_modal_prefill');
     }
 
     #[On('operational-call-intake')]
@@ -39,11 +40,14 @@ final class OperationalCallIntakeBridge extends Component
         mixed $longitude = null,
         mixed $call_received_at = null,
         mixed $external_reference = null,
+        mixed $socket = null,
     ): void {
         $user = Auth::user();
         if ($user === null || ! $user->hasOperationalAbility('incident.create')) {
             return;
         }
+
+        session()->forget('operations.call_intake_modal_prefill');
 
         $this->callIntakePrefill = [
             'form_url' => self::stringFromMixed($form_url),
@@ -55,6 +59,10 @@ final class OperationalCallIntakeBridge extends Component
             'call_received_at' => self::nullableTrimmedString($call_received_at),
             'external_reference' => self::nullableTrimmedString($external_reference),
         ];
+        session()->put('operations.call_intake_modal_prefill', $this->callIntakePrefill);
+
+        unset($socket);
+
         $this->callIntakeRenderKey++;
         $this->showCallIntakeModal = true;
     }

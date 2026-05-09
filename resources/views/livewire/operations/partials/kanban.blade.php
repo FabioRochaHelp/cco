@@ -3,7 +3,6 @@
 @endphp
 
 <div>
-    <flux:subheading class="mb-4 text-slate-700 dark:text-slate-300">{{ __('Kanban — etapas do deslocamento') }}</flux:subheading>
     <div class="-mx-1 overflow-x-auto pb-2">
         <div class="flex w-max max-w-none gap-3 px-1">
         @foreach ($orderedStages as $stage)

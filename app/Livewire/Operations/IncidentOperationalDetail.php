@@ -21,6 +21,8 @@ final class IncidentOperationalDetail extends Component
 
         $this->incident = $incident->load([
             'nature',
+            'nurseReport.filledBy',
+            'victims',
             'timelineEvents' => fn ($q) => $q->orderByDesc('recorded_at')->limit(100),
             'timelineEvents.actor',
             'dispatches.shift.vehicle',
@@ -32,6 +34,8 @@ final class IncidentOperationalDetail extends Component
         $this->incident->refresh();
         $this->incident->load([
             'nature',
+            'nurseReport.filledBy',
+            'victims',
             'timelineEvents' => fn ($q) => $q->orderByDesc('recorded_at')->limit(100),
             'timelineEvents.actor',
             'dispatches.shift.vehicle',

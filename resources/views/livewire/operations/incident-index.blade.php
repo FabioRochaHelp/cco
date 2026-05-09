@@ -2,7 +2,7 @@
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <flux:heading size="xl">{{ __('Ocorrências') }}</flux:heading>
-            <flux:text class="mt-1">{{ __('Listas por status, alinhadas ao fluxo legado (abertas, em campo, QTA, encerradas).') }}</flux:text>
+            <flux:text class="mt-1">{{ __('Listas por status: em campo, pendência de relatório de enfermagem e encerradas definitivas.') }}</flux:text>
         </div>
         <div class="flex flex-wrap gap-2">
             @if (auth()->user()?->hasOperationalAbility('incident.create'))
@@ -21,6 +21,7 @@
             @foreach ([
                 ['key' => 'open', 'label' => __('Abertas'), 'count' => $counts['open']],
                 ['key' => 'field', 'label' => __('Em campo'), 'count' => $counts['field']],
+                ['key' => 'pending_nurse', 'label' => __('Pendente relatório'), 'count' => $counts['pending_nurse']],
                 ['key' => 'qta', 'label' => __('QTA'), 'count' => $counts['qta']],
                 ['key' => 'closed', 'label' => __('Encerradas'), 'count' => $counts['closed']],
                 ['key' => 'cancelled', 'label' => __('Canceladas'), 'count' => $counts['cancelled']],

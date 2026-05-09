@@ -100,6 +100,13 @@ class User extends Authenticatable
             $base[] = 'victim.prescribe';
         }
 
+        if ($this->users_type_legacy === 3) {
+            return [
+                'dispatch.view',
+                'incident.nurse_report',
+            ];
+        }
+
         return $base;
     }
 

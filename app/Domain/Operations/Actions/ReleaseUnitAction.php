@@ -66,7 +66,7 @@ final class ReleaseUnitAction
                 $shift->update(['status' => ShiftStatus::Available, 'status_legacy' => 1]);
 
                 $incident->update([
-                    'status' => IncidentStatus::Closed,
+                    'status' => IncidentStatus::PendingNurseReport,
                     'returned_base_at' => $now,
                     'primary_shift_id' => null,
                 ]);

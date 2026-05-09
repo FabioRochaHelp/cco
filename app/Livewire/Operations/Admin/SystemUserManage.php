@@ -87,6 +87,7 @@ final class SystemUserManage extends Component
         return [
             1 => __('Administrador central'),
             2 => __('Operador central'),
+            3 => __('Enfermeiro (relatório pós-ocorrência)'),
             4 => __('Médico (prescrição)'),
             5 => __('Operador municipal'),
         ];
@@ -145,7 +146,7 @@ final class SystemUserManage extends Component
                 Rule::unique('users', 'email')->ignore($this->editingId),
             ],
             'password' => $passwordRules,
-            'users_type_legacy' => ['required', 'integer', Rule::in([1, 2, 4, 5])],
+            'users_type_legacy' => ['required', 'integer', Rule::in([1, 2, 3, 4, 5])],
             'user_type_id' => ['nullable', 'integer', 'exists:user_types,id'],
             'municipio_id' => [
                 Rule::requiredIf($legacy > 2),

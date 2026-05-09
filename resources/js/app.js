@@ -22,6 +22,36 @@ const host = resolveReverbHost();
 
 let operationalCallIntakeEchoBound = false;
 
+/** Echo/Reverb pode entregar `data` como string JSON ou objeto aninhado em `.data`. */
+function normalizeOperationalCallIntakeBroadcast(raw) {
+    let p = raw;
+    if (typeof p === 'string') {
+        try {
+            p = JSON.parse(p);
+        } catch {
+            return {};
+        }
+    }
+    if (!p || typeof p !== 'object') {
+        return {};
+    }
+    if (Object.prototype.hasOwnProperty.call(p, 'data')) {
+        const inner = p.data;
+        if (typeof inner === 'string') {
+            try {
+                return JSON.parse(inner);
+            } catch {
+                return {};
+            }
+        }
+        if (inner && typeof inner === 'object') {
+            return inner;
+        }
+    }
+
+    return p;
+}
+
 function subscribeOperationalCallIntake() {
     const body = document.body;
     if (!body?.dataset?.broadcastOperations || body.dataset.broadcastOperations !== '1') {
@@ -41,17 +71,18 @@ function subscribeOperationalCallIntake() {
             return;
         }
 
-        const latRaw = payload?.latitude;
-        const lngRaw = payload?.longitude;
-        const phoneRaw = payload?.phone;
+        const p = normalizeOperationalCallIntakeBroadcast(payload);
+        const latRaw = p.latitude;
+        const lngRaw = p.longitude;
+        const phoneRaw = p.phone ?? p.phoneDigits;
         Livewire.dispatch('operational-call-intake', {
-            form_url: payload?.form_url ?? '',
+            form_url: p.form_url ?? '',
             phone:
                 phoneRaw !== null && phoneRaw !== undefined && phoneRaw !== ''
                     ? String(phoneRaw)
                     : '',
-            expires_at: payload?.expires_at ?? '',
-            caller_name: payload?.caller_name ?? null,
+            expires_at: p.expires_at ?? '',
+            caller_name: p.caller_name ?? null,
             latitude:
                 latRaw !== null && latRaw !== undefined && latRaw !== ''
                     ? String(latRaw)
@@ -60,8 +91,8 @@ function subscribeOperationalCallIntake() {
                 lngRaw !== null && lngRaw !== undefined && lngRaw !== ''
                     ? String(lngRaw)
                     : null,
-            call_received_at: payload?.call_received_at ?? null,
-            external_reference: payload?.external_reference ?? null,
+            call_received_at: p.call_received_at ?? null,
+            external_reference: p.external_reference ?? null,
         });
     });
 }

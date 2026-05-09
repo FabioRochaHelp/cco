@@ -8,6 +8,7 @@ use App\Domain\Operations\Enums\IncidentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Incident extends Model
@@ -112,6 +113,11 @@ class Incident extends Model
     public function victims(): HasMany
     {
         return $this->hasMany(Victim::class);
+    }
+
+    public function nurseReport(): HasOne
+    {
+        return $this->hasOne(IncidentNurseReport::class);
     }
 
     public function activeDispatch(): ?IncidentDispatch

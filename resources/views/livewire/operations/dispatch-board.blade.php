@@ -1,7 +1,7 @@
 <div class="cco-page-gap" wire:poll.10s>
     @include('livewire.operations.partials.dispatch-header')
     @include('livewire.operations.partials.dispatch-alerts')
-    @include('livewire.operations.partials.tactical-strip', ['stats' => $stats])
+    
 
     <div class="grid gap-4 lg:grid-cols-12 lg:items-start">
         <aside class="order-1 lg:col-span-3">
@@ -21,6 +21,8 @@
     </div>
     
     @include('livewire.operations.partials.kanban')
+    
+    @include('livewire.operations.partials.tactical-strip', ['stats' => $stats])
 
     @include('livewire.operations.partials.map-and-feed')
 

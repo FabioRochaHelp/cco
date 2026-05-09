@@ -13,9 +13,11 @@
             @endif
         </div>
 
-        <flux:callout variant="info">
-            {{ __('O cadastro não vincula a ocorrência a uma base (município). A hora da chamada é a mesma da data/hora da ocorrência.') }}
-        </flux:callout>
+        @unless ($guest_intake)
+            <flux:callout variant="info">
+                {{ __('O cadastro não vincula a ocorrência a uma base (município). A hora da chamada é a mesma da data/hora da ocorrência.') }}
+            </flux:callout>
+        @endunless
     @endunless
 
     @if ($errors->any())
@@ -31,14 +33,15 @@
     <flux:card>
         <div class="grid gap-6">
             <div class="grid gap-4 lg:grid-cols-2">
-                <flux:input wire:model="occurred_at" type="datetime-local" :label="__('Data e hora da ocorrência / chamada')" class="lg:col-span-2" />
+                @if (! $embeddedInModal && ! $guest_intake)
+                    <flux:input wire:model="occurred_at" type="datetime-local" :label="__('Data e hora da ocorrência / chamada')" class="lg:col-span-2" />
+                @endif
 
                 <flux:input
                     wire:model="caller_phone"
                     type="tel"
                     autocomplete="tel"
                     :label="__('Telefone')"
-                    description="{{ $embeddedInModal ? __('Pode vir pré-preenchido pela Central.') : __('Obrigatório. Fluxo manual: use «Identificar chamada» antes de abrir este formulário.') }}"
                 />
 
                 <flux:input wire:model="caller_name" :label="__('Solicitante')" />
@@ -47,11 +50,6 @@
             </div>
 
             <div class="border-t border-slate-200/90 pt-6 dark:border-slate-700/60">
-                <flux:heading size="sm" class="mb-3">{{ __('Endereço e mapa') }}</flux:heading>
-                <flux:text size="sm" class="mb-4 text-slate-600 dark:text-slate-400">
-                    {{ __('Busca via OpenStreetMap (Nominatim). Arraste o marcador ou clique no mapa para ajustar coordenadas.') }}
-                </flux:text>
-
                 <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                     <div class="min-w-0 flex-1">
                         <flux:input
@@ -74,6 +72,7 @@
                     <flux:input wire:model="number" :label="__('Número')" />
                     <flux:input wire:model="district" :label="__('Bairro')" />
                     <flux:input wire:model="city" :label="__('Cidade')" />
+                    <flux:textarea wire:model="reference_notes" :label="__('Referência')" rows="2" class="lg:col-span-2" />
 
                     <div class="incident-osm-host lg:col-span-2">
                         <flux:text size="sm" class="mb-2 font-medium">{{ __('Mapa') }}</flux:text>
@@ -85,16 +84,11 @@
                         >
                             <div x-ref="mapEl" class="h-full w-full"></div>
                         </div>
-                        <div class="mt-2 grid gap-2 sm:grid-cols-2">
-                            <flux:input wire:model="latitude" :label="__('Latitude')" readonly />
-                            <flux:input wire:model="longitude" :label="__('Longitude')" readonly />
-                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="border-t border-slate-200/90 pt-6 dark:border-slate-700/60">
-                <flux:heading size="sm" class="mb-4">{{ __('Natureza e paciente') }}</flux:heading>
                 <div class="grid gap-4 lg:grid-cols-2">
                     <flux:select wire:model="nature_id" :label="__('Natureza')" placeholder="{{ __('Selecione') }}" class="lg:col-span-2">
                         @foreach ($natures as $n)
@@ -115,25 +109,10 @@
             </div>
 
             <div class="border-t border-slate-200/90 pt-6 dark:border-slate-700/60">
-                <flux:heading size="sm" class="mb-4">{{ __('Demais informações') }}</flux:heading>
-                <div class="grid gap-4 lg:grid-cols-2">
-                    <flux:textarea wire:model="reference_notes" :label="__('Referência')" rows="2" class="lg:col-span-2" />
-
-                    <flux:input wire:model.number="expected_victim_total" type="number" :label="__('Total de vítimas (estimado)')" />
-                    <flux:input wire:model.number="total_death_count" type="number" :label="__('Óbitos (total)')" />
-
-                    <div class="flex items-center gap-2 lg:col-span-2">
-                        <flux:checkbox wire:model.boolean="is_qta" :label="__('QTA (sem atendimento / flag operacional)')" />
-                    </div>
-                </div>
+               
             </div>
 
             <div class="border-t border-slate-200/95 pt-6 dark:border-slate-700/60">
-                <flux:heading size="sm" class="mb-2">{{ __('Tipo de chamada') }}</flux:heading>
-                <flux:text size="sm" class="mb-4 text-slate-600 dark:text-slate-400 {{ $embeddedInModal ? 'text-end' : '' }}">
-                    {{ __('Escolha uma opção para registrar e encerrar (C / T / A / N / U conforme migração legada).') }}
-                </flux:text>
-
                 <div class="flex flex-wrap justify-end gap-2">
                     @foreach ($callTypesForButtons as $type)
                         @php

@@ -23,7 +23,7 @@ final class IncidentIndex extends Component
 {
     use WithPagination;
 
-    /** @var 'open'|'field'|'qta'|'closed'|'cancelled'|'all' */
+    /** @var 'open'|'field'|'pending_nurse'|'qta'|'closed'|'cancelled'|'all' */
     #[Url(as: 'f')]
     public string $filter = 'open';
 
@@ -34,7 +34,7 @@ final class IncidentIndex extends Component
 
     public function setFilter(string $value): void
     {
-        $allowed = ['open', 'field', 'qta', 'closed', 'cancelled', 'all'];
+        $allowed = ['open', 'field', 'pending_nurse', 'qta', 'closed', 'cancelled', 'all'];
         if (in_array($value, $allowed, true)) {
             $this->filter = $value;
             $this->resetPage();
@@ -52,6 +52,7 @@ final class IncidentIndex extends Component
         $query = match ($this->filter) {
             'open' => $query->where('status', IncidentStatus::Open),
             'field' => $query->whereIn('status', [IncidentStatus::Dispatched, IncidentStatus::InProgress]),
+            'pending_nurse' => $query->where('status', IncidentStatus::PendingNurseReport),
             'qta' => $query->where('status', IncidentStatus::Qta),
             'closed' => $query->where('status', IncidentStatus::Closed),
             'cancelled' => $query->where('status', IncidentStatus::Cancelled),
@@ -79,6 +80,7 @@ final class IncidentIndex extends Component
         return [
             'open' => (clone $base)->where('status', IncidentStatus::Open)->count(),
             'field' => (clone $base)->whereIn('status', [IncidentStatus::Dispatched, IncidentStatus::InProgress])->count(),
+            'pending_nurse' => (clone $base)->where('status', IncidentStatus::PendingNurseReport)->count(),
             'qta' => (clone $base)->where('status', IncidentStatus::Qta)->count(),
             'closed' => (clone $base)->where('status', IncidentStatus::Closed)->count(),
             'cancelled' => (clone $base)->where('status', IncidentStatus::Cancelled)->count(),

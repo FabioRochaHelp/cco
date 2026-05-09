@@ -11,6 +11,7 @@ use App\Livewire\Operations\FleetShifts;
 use App\Livewire\Operations\IncidentCallStart;
 use App\Livewire\Operations\IncidentCreate;
 use App\Livewire\Operations\IncidentIndex;
+use App\Livewire\Operations\IncidentNurseReport;
 use App\Livewire\Operations\IncidentOperationalDetail;
 use App\Livewire\Operations\Parameters\AccessoryParameterManage;
 use App\Livewire\Operations\Parameters\CareLocalParameterManage;
@@ -21,6 +22,7 @@ use App\Livewire\Operations\Parameters\ProcedureParameterManage;
 use App\Livewire\Operations\Parameters\VictimTypeParameterManage;
 use App\Livewire\Operations\StaffManage;
 use App\Livewire\Operations\VehicleManage;
+use App\Livewire\Operations\VictimRecord;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -79,6 +81,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/dispatch', DispatchBoard::class)->name('operations.dispatch');
             Route::get('/incidents', IncidentIndex::class)->name('operations.incidents.index');
             Route::get('/incidents/start', IncidentCallStart::class)->name('operations.incidents.start');
+            Route::get('/incidents/{incident}/victims/create', VictimRecord::class)->name('operations.incidents.victims.create');
+            Route::get('/incidents/{incident}/victims/{victim}/edit', VictimRecord::class)->name('operations.incidents.victims.edit');
+            Route::get('/incidents/{incident}/nurse-report', IncidentNurseReport::class)->name('operations.incidents.nurse-report');
             Route::get('/incidents/{incident}', IncidentOperationalDetail::class)->name('operations.incidents.show');
             Route::get('/fleet', FleetShifts::class)->name('operations.fleet');
         });

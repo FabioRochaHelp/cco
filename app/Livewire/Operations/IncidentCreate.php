@@ -168,6 +168,34 @@ final class IncidentCreate extends Component
 
     private function hydrateEmbeddedPrefillFromProps(): void
     {
+        /** @var array<string, mixed>|null $snap */
+        $snap = session()->get('operations.call_intake_modal_prefill');
+        if (is_array($snap)) {
+            if ($this->caller_phone === '' && (($snap['phone'] ?? '') !== '')) {
+                $this->caller_phone = IncidentPhoneNormalizer::normalize((string) $snap['phone']);
+            }
+            $cn = $snap['caller_name'] ?? null;
+            if (($this->caller_name === null || trim((string) $this->caller_name) === '') && is_string($cn) && trim($cn) !== '') {
+                $this->caller_name = trim($cn);
+            }
+            if (($this->latitude === null || $this->latitude === '') && (($snap['latitude'] ?? '') !== '' && $snap['latitude'] !== null)) {
+                $this->latitude = is_string($snap['latitude']) ? trim($snap['latitude']) : (string) $snap['latitude'];
+            }
+            if (($this->longitude === null || $this->longitude === '') && (($snap['longitude'] ?? '') !== '' && $snap['longitude'] !== null)) {
+                $this->longitude = is_string($snap['longitude']) ? trim($snap['longitude']) : (string) $snap['longitude'];
+            }
+            $ref = $snap['external_reference'] ?? null;
+            if (($this->reference_notes === null || trim((string) $this->reference_notes) === '') && is_string($ref) && trim($ref) !== '') {
+                $this->reference_notes = trim($ref);
+            }
+            $cra = $snap['call_received_at'] ?? null;
+            if ($this->call_received_at === '' && is_string($cra) && trim($cra) !== '') {
+                $this->call_received_at = trim($cra);
+            }
+        }
+
+        session()->forget('operations.call_intake_modal_prefill');
+
         $this->caller_phone = IncidentPhoneNormalizer::normalize($this->caller_phone);
 
         if ($this->call_received_at !== '') {

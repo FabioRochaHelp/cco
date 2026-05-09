@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Domain\Operations\Enums\IncidentStatus;
 use App\Models\Incident;
 use App\Models\User;
 
@@ -82,5 +83,29 @@ final class IncidentPolicy
         }
 
         return $user->canAccessOperationalMunicipio($municipioId);
+    }
+
+    /** Nova vítima na ocorrência — formulário doc vitima + auxiliares (docs/migracao/banco-dados.md). */
+    public function recordVictim(User $user, Incident $incident): bool
+    {
+        if (! $user->hasOperationalAbility('victim.record')) {
+            return false;
+        }
+
+        return $this->viewOperational($user, $incident);
+    }
+
+    /** Relatório de enfermagem obrigatório para encerrar: liberado em pendência ou edição após encerrada. */
+    public function fillNurseReport(User $user, Incident $incident): bool
+    {
+        if (! $user->hasOperationalAbility('incident.nurse_report')) {
+            return false;
+        }
+
+        if (! in_array($incident->status, [IncidentStatus::PendingNurseReport, IncidentStatus::Closed], true)) {
+            return false;
+        }
+
+        return $this->viewOperational($user, $incident);
     }
 }

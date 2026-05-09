@@ -20,7 +20,6 @@
         </div>
         <div>
             <flux:heading size="xl" class="tracking-tight text-slate-900 dark:text-slate-50">{{ __('Central operacional (CCO)') }}</flux:heading>
-            <flux:text class="mt-2 max-w-2xl text-slate-600 dark:text-slate-400">{{ __('Painel tático em tempo quase real — filas, disponibilidade e etapas do deslocamento.') }}</flux:text>
         </div>
     </div>
 
@@ -29,15 +28,12 @@
             <div
                 class="w-full max-w-md rounded-xl border border-slate-200/95 bg-white/85 p-4 shadow-md shadow-slate-900/5 backdrop-blur-sm dark:border-slate-700/50 dark:bg-slate-900/40 dark:shadow-inner dark:shadow-black/20"
             >
-                <flux:select wire:model.live="selectedOperationalMunicipioId" :label="__('Município / base (contexto)')" placeholder="{{ __('Selecionar escopo') }}">
+                <flux:select wire:model.live="selectedOperationalMunicipioId" :label="__('Base | Município')" placeholder="{{ __('Selecionar escopo') }}">
                     <flux:select.option value="">{{ __('Visão supervisor (todas as bases)') }}</flux:select.option>
                     @foreach ($municipioOptions as $municipio)
                         <flux:select.option value="{{ $municipio->id }}">{{ $municipio->razao_social }}</flux:select.option>
                     @endforeach
                 </flux:select>
-                <flux:text size="sm" class="mt-2 text-slate-600 dark:text-slate-500">
-                    {{ __('Com escopo definido, novos registros demo usam esse município contratante. Viaturas e ocorrências permanecem vinculadas ao município de cada registro.') }}
-                </flux:text>
             </div>
         @endif
     @endauth

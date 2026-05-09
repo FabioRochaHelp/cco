@@ -55,7 +55,7 @@
                     <flux:sidebar.item
                         icon="rectangle-stack"
                         :href="route('operations.incidents.index')"
-                        :current="request()->routeIs('operations.incidents.index') || request()->routeIs('operations.incidents.show')"
+                        :current="request()->routeIs('operations.incidents.index') || request()->routeIs('operations.incidents.show') || request()->routeIs('operations.incidents.nurse-report') || request()->routeIs('operations.incidents.victims.*')"
                         wire:navigate
                     >
                         {{ __('Ocorrências') }}

@@ -24,26 +24,7 @@
         <div class="space-y-4">
             <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200/90 pb-4 dark:border-slate-700/60">
                 <div class="min-w-0 flex-1">
-                    <flux:heading size="lg">{{ __('Nova chamada (PABX)') }}</flux:heading>
-                    @if ($callIntakeExpiresLabel !== null)
-                        <flux:text size="sm" class="mt-1 text-slate-600 dark:text-slate-400">
-                            {{ __('Link para formulário externo / convidado expira em :hora.', ['hora' => $callIntakeExpiresLabel]) }}
-                        </flux:text>
-                    @endif
-                    @if (! empty($callIntakePrefill['form_url']))
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            <flux:button
-                                variant="ghost"
-                                size="sm"
-                                icon="arrow-right-circle"
-                                :href="$callIntakePrefill['form_url']"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {{ __('Abrir link assinado (nova aba)') }}
-                            </flux:button>
-                        </div>
-                    @endif
+                    <flux:heading size="lg">{{ __('Nova chamada') }}</flux:heading>
                 </div>
             </div>
 

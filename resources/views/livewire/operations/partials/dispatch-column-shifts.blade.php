@@ -1,9 +1,6 @@
 <flux:card class="flex max-h-[min(72vh,44rem)] flex-col gap-3 shadow-sm lg:sticky lg:top-24">
     <div>
         <flux:subheading>{{ __('Turnos disponíveis') }}</flux:subheading>
-        <flux:text size="sm" class="mt-1 text-slate-600 dark:text-slate-400">
-            {{ __('Referência de viaturas em turno disponível. O vínculo ocorrência ↔ turno é feito só no empenho (clique na fila e escolha a viatura).') }}
-        </flux:text>
     </div>
 
     <div class="min-h-0 flex-1 space-y-2 overflow-y-auto pe-1">

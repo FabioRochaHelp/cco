@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Domain\Operations\Enums\ShiftStatus;
+use App\Models\Accessory;
+use App\Models\CareLocal;
+use App\Models\InjurySite;
 use App\Models\Municipio;
 use App\Models\Nature;
 use App\Models\NatureType;
+use App\Models\Procedure;
 use App\Models\Shift;
 use App\Models\Staff;
 use App\Models\User;
@@ -46,6 +50,14 @@ class OperationalDemoSeeder extends Seeder
         VictimType::query()->create([
             'name' => 'Tipo vítima demonstração',
         ]);
+
+        Procedure::query()->firstOrCreate(['name' => 'Oxigenoterapia']);
+        Procedure::query()->firstOrCreate(['name' => 'Acesso venoso periférico']);
+        Accessory::query()->firstOrCreate(['name' => 'Colar cervical']);
+        Accessory::query()->firstOrCreate(['name' => 'Kit trauma']);
+        InjurySite::query()->firstOrCreate(['name' => 'Membro superior direito']);
+        InjurySite::query()->firstOrCreate(['name' => 'Tórax anterior']);
+        CareLocal::query()->firstOrCreate(['name' => 'Via pública']);
 
         $vehicle = Vehicle::query()->create([
             'municipio_id' => $municipio->id,
@@ -93,6 +105,15 @@ class OperationalDemoSeeder extends Seeder
             'municipio_id' => $municipio->id,
             'user_type_id' => $typeMunicipal->id,
             'users_type_legacy' => 5,
+        ]);
+
+        User::factory()->create([
+            'name' => 'Enfermeiro demonstração',
+            'email' => 'enfermeiro@example.com',
+            'password' => 'password',
+            'municipio_id' => $municipio->id,
+            'user_type_id' => $typeMunicipal->id,
+            'users_type_legacy' => 3,
         ]);
     }
 }

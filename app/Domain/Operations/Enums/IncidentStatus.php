@@ -14,6 +14,8 @@ enum IncidentStatus: string
     case Open = 'open';
     case Dispatched = 'dispatched';
     case InProgress = 'in_progress';
+    /** Viatura liberada; encerramento administrativo só após relatório de enfermagem. */
+    case PendingNurseReport = 'pending_nurse_report';
     case Closed = 'closed';
     case Qta = 'qta';
     case Cancelled = 'cancelled';
@@ -24,6 +26,7 @@ enum IncidentStatus: string
             self::Open => 'Aberta',
             self::Dispatched => 'Despachada',
             self::InProgress => 'Em atendimento',
+            self::PendingNurseReport => 'Pendente — relatório de enfermagem',
             self::Closed => 'Encerrada',
             self::Qta => 'QTA',
             self::Cancelled => 'Cancelada',

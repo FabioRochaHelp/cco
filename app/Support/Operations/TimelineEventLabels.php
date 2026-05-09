@@ -13,7 +13,10 @@ final class TimelineEventLabels
             'incident_created' => 'Ocorrência registrada',
             'unit_dispatched' => 'Equipe empenhada',
             'dispatch_stage_advanced' => 'Etapa do deslocamento',
-            'unit_released' => 'Retorno à base / encerramento',
+            'unit_released' => 'Retorno à base (pendente relatório de enfermagem)',
+            'incident_closed' => 'Ocorrência encerrada',
+            'nurse_report_saved' => 'Relatório de enfermagem registrado',
+            'victim_recorded' => 'Registro de vítima atualizado',
             default => str_replace('_', ' ', $key),
         };
     }
