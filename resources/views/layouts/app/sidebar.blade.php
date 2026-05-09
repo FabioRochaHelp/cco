@@ -3,7 +3,17 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="cco-shell min-h-screen antialiased">
+    <body
+        class="cco-shell min-h-screen antialiased"
+        @auth
+            data-broadcast-operations="{{ auth()->user()?->hasOperationalAbility('dispatch.view') ? '1' : '0' }}"
+        @endauth
+    >
+        @auth
+            @if (auth()->user()?->hasOperationalAbility('dispatch.view'))
+                <livewire:operations.operational-call-intake-bridge />
+            @endif
+        @endauth
         <flux:sidebar sticky :collapsible="true" class="cco-sidebar border-e border-slate-200/90 bg-white shadow-sm shadow-slate-900/5 dark:border-zinc-800/80 dark:bg-zinc-950 dark:shadow-none">
             <flux:sidebar.header>
                 <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
@@ -53,8 +63,8 @@
                     @if (auth()->user()?->hasOperationalAbility('incident.create'))
                         <flux:sidebar.item
                             icon="plus-circle"
-                            :href="route('operations.incidents.create')"
-                            :current="request()->routeIs('operations.incidents.create')"
+                            :href="route('operations.incidents.start')"
+                            :current="request()->routeIs('operations.incidents.start') || request()->routeIs('operations.incidents.create')"
                             wire:navigate
                         >
                             {{ __('Nova ocorrência') }}
@@ -197,7 +207,9 @@
                 </flux:sidebar.item>
             </flux:sidebar.nav>
 
-            <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
+            @auth
+                <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
+            @endauth
         </flux:sidebar>
 
         <!-- Mobile User Menu -->
@@ -206,68 +218,88 @@
 
             <flux:spacer />
 
-            <flux:dropdown position="top" align="end">
-                <flux:profile
-                    :initials="auth()->user()->initials()"
-                    icon-trailing="chevron-down"
-                />
+            @auth
+                <flux:dropdown position="top" align="end">
+                    <flux:profile
+                        :initials="auth()->user()->initials()"
+                        icon-trailing="chevron-down"
+                    />
 
-                <flux:menu>
-                    <flux:menu.radio.group>
-                        <div class="p-0 text-sm font-normal">
-                            <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-                                <flux:avatar
-                                    :name="auth()->user()->name"
-                                    :initials="auth()->user()->initials()"
-                                />
+                    <flux:menu>
+                        <flux:menu.radio.group>
+                            <div class="p-0 text-sm font-normal">
+                                <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
+                                    <flux:avatar
+                                        :name="auth()->user()->name"
+                                        :initials="auth()->user()->initials()"
+                                    />
 
-                                <div class="grid flex-1 text-start text-sm leading-tight">
-                                    <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
-                                    <flux:text class="truncate">{{ auth()->user()->email }}</flux:text>
+                                    <div class="grid flex-1 text-start text-sm leading-tight">
+                                        <flux:heading class="truncate">{{ auth()->user()->name }}</flux:heading>
+                                        <flux:text class="truncate">{{ auth()->user()->email }}</flux:text>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </flux:menu.radio.group>
+                        </flux:menu.radio.group>
 
-                    <flux:menu.separator />
+                        <flux:menu.separator />
 
-                    <flux:menu.heading>{{ __('Tema') }}</flux:menu.heading>
-                    <flux:menu.radio.group>
-                        <flux:menu.item as="button" type="button" icon="sun" x-data x-on:click.prevent="window.Flux.applyAppearance('light')">
-                            {{ __('Claro') }}
-                        </flux:menu.item>
-                        <flux:menu.item as="button" type="button" icon="moon" x-data x-on:click.prevent="window.Flux.applyAppearance('dark')">
-                            {{ __('Escuro') }}
-                        </flux:menu.item>
-                        <flux:menu.item as="button" type="button" icon="computer-desktop" x-data x-on:click.prevent="window.Flux.applyAppearance('system')">
-                            {{ __('Sistema') }}
-                        </flux:menu.item>
-                    </flux:menu.radio.group>
+                        <flux:menu.heading>{{ __('Tema') }}</flux:menu.heading>
+                        <flux:menu.radio.group>
+                            <flux:menu.item as="button" type="button" icon="sun" x-data x-on:click.prevent="window.Flux.applyAppearance('light')">
+                                {{ __('Claro') }}
+                            </flux:menu.item>
+                            <flux:menu.item as="button" type="button" icon="moon" x-data x-on:click.prevent="window.Flux.applyAppearance('dark')">
+                                {{ __('Escuro') }}
+                            </flux:menu.item>
+                            <flux:menu.item as="button" type="button" icon="computer-desktop" x-data x-on:click.prevent="window.Flux.applyAppearance('system')">
+                                {{ __('Sistema') }}
+                            </flux:menu.item>
+                        </flux:menu.radio.group>
 
-                    <flux:menu.separator />
+                        <flux:menu.separator />
 
-                    <flux:menu.radio.group>
-                        <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                            {{ __('Settings') }}
-                        </flux:menu.item>
-                    </flux:menu.radio.group>
+                        <flux:menu.radio.group>
+                            <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
+                                {{ __('Settings') }}
+                            </flux:menu.item>
+                        </flux:menu.radio.group>
 
-                    <flux:menu.separator />
+                        <flux:menu.separator />
 
-                    <form method="POST" action="{{ route('logout') }}" class="w-full">
-                        @csrf
-                        <flux:menu.item
-                            as="button"
-                            type="submit"
-                            icon="arrow-right-start-on-rectangle"
-                            class="w-full cursor-pointer"
-                            data-test="logout-button"
-                        >
-                            {{ __('Log out') }}
-                        </flux:menu.item>
-                    </form>
-                </flux:menu>
-            </flux:dropdown>
+                        <form method="POST" action="{{ route('logout') }}" class="w-full">
+                            @csrf
+                            <flux:menu.item
+                                as="button"
+                                type="submit"
+                                icon="arrow-right-start-on-rectangle"
+                                class="w-full cursor-pointer"
+                                data-test="logout-button"
+                            >
+                                {{ __('Log out') }}
+                            </flux:menu.item>
+                        </form>
+                    </flux:menu>
+                </flux:dropdown>
+            @else
+                <flux:dropdown position="top" align="end">
+                    <flux:button variant="ghost" size="sm" icon="paint-brush" inset="top bottom" />
+                    <flux:menu>
+                        <flux:menu.heading>{{ __('Tema') }}</flux:menu.heading>
+                        <flux:menu.radio.group>
+                            <flux:menu.item as="button" type="button" icon="sun" x-data x-on:click.prevent="window.Flux.applyAppearance('light')">
+                                {{ __('Claro') }}
+                            </flux:menu.item>
+                            <flux:menu.item as="button" type="button" icon="moon" x-data x-on:click.prevent="window.Flux.applyAppearance('dark')">
+                                {{ __('Escuro') }}
+                            </flux:menu.item>
+                            <flux:menu.item as="button" type="button" icon="computer-desktop" x-data x-on:click.prevent="window.Flux.applyAppearance('system')">
+                                {{ __('Sistema') }}
+                            </flux:menu.item>
+                        </flux:menu.radio.group>
+                    </flux:menu>
+                </flux:dropdown>
+            @endauth
         </flux:header>
 
         {{ $slot }}

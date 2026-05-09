@@ -12,7 +12,7 @@
            
             @include('livewire.operations.partials.open-incidents')
             @include('livewire.operations.partials.dispatch-dispatch-modal')
-            
+
         </section>
 
         <aside class="order-3 lg:col-span-3">

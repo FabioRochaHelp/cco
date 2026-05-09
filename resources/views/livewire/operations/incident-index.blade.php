@@ -6,7 +6,7 @@
         </div>
         <div class="flex flex-wrap gap-2">
             @if (auth()->user()?->hasOperationalAbility('incident.create'))
-                <flux:button variant="primary" icon="plus-circle" :href="route('operations.incidents.create')" wire:navigate>
+                <flux:button variant="primary" icon="plus-circle" :href="route('operations.incidents.start')" wire:navigate>
                     {{ __('Nova ocorrência') }}
                 </flux:button>
             @endif

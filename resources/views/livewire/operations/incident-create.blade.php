@@ -1,18 +1,22 @@
 <div class="cco-page-gap">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <flux:heading size="xl">{{ __('Nova ocorrência') }}</flux:heading>
-            <flux:text class="mt-1">{{ __('Cadastro conforme domínio legado (local, solicitante, natureza, tipo de chamada).') }}</flux:text>
+    @unless ($embeddedInModal)
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <flux:heading size="xl">{{ __('Nova ocorrência') }}</flux:heading>
+                <flux:text class="mt-1">{{ __('Cadastro conforme domínio legado (local, solicitante, natureza, tipo de chamada).') }}</flux:text>
+            </div>
+            @if (! $guest_intake)
+                <div class="flex flex-wrap gap-2">
+                    <flux:button variant="ghost" icon="rectangle-stack" :href="route('operations.incidents.index')" wire:navigate>{{ __('Lista') }}</flux:button>
+                    <flux:button variant="ghost" icon="radio" :href="route('operations.dispatch')" wire:navigate>{{ __('CCO') }}</flux:button>
+                </div>
+            @endif
         </div>
-        <div class="flex flex-wrap gap-2">
-            <flux:button variant="ghost" icon="rectangle-stack" :href="route('operations.incidents.index')" wire:navigate>{{ __('Lista') }}</flux:button>
-            <flux:button variant="ghost" icon="radio" :href="route('operations.dispatch')" wire:navigate>{{ __('CCO') }}</flux:button>
-        </div>
-    </div>
 
-    <flux:callout variant="info">
-        {{ __('O cadastro não vincula a ocorrência a uma base (município). A base é definida no empenho, ao escolher o turno/viatura no CCO.') }}
-    </flux:callout>
+        <flux:callout variant="info">
+            {{ __('O cadastro não vincula a ocorrência a uma base (município). A base é definida no empenho, ao escolher o turno/viatura no CCO.') }}
+        </flux:callout>
+    @endunless
 
     @if ($errors->any())
         <flux:callout variant="danger">
@@ -44,7 +48,13 @@
             <flux:textarea wire:model="reference_notes" :label="__('Referência')" rows="2" class="lg:col-span-2" />
 
             <flux:input wire:model="caller_name" :label="__('Solicitante')" />
-            <flux:input wire:model="caller_phone" :label="__('Telefone')" />
+            <flux:input
+                wire:model="caller_phone"
+                type="tel"
+                autocomplete="tel"
+                :label="__('Telefone da chamada')"
+                description="{{ $embeddedInModal ? __('Pré-preenchido pela chamada recebida na Central.') : __('Obrigatório. Na entrada manual use primeiro «Identificar chamada»; por webhook o número vem pré-preenchido.') }}"
+            />
 
             <flux:input wire:model="patient_name" :label="__('Paciente (nome)')" />
             <flux:input wire:model.number="patient_age" type="number" :label="__('Idade')" />

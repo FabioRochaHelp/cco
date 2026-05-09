@@ -17,10 +17,10 @@
                 <span class="cco-quick-link-meta">{{ __('Lista e acompanhamento') }}</span>
             </a>
             @if (auth()->user()?->hasOperationalAbility('incident.create'))
-                <a href="{{ route('operations.incidents.create') }}" wire:navigate class="cco-quick-link">
+                <a href="{{ route('operations.incidents.start') }}" wire:navigate class="cco-quick-link">
                     <flux:icon.plus-circle class="size-5 text-cyan-600 dark:text-cyan-400/90" />
                     <span class="cco-quick-link-title">{{ __('Nova ocorrência') }}</span>
-                    <span class="cco-quick-link-meta">{{ __('Registro na base atual') }}</span>
+                    <span class="cco-quick-link-meta">{{ __('Informar telefone da chamada') }}</span>
                 </a>
             @endif
             <a href="{{ route('operations.fleet') }}" wire:navigate class="cco-quick-link">

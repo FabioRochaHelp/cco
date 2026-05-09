@@ -33,8 +33,9 @@ test('operations pages redirect guests to login', function () use ($operationsPa
     $this->get(route('operations.cadastro.shifts'))->assertRedirect();
     $this->get(route('operations.catalog.vehicles'))->assertRedirect();
     $this->get(route('operations.catalog.staff'))->assertRedirect();
-    $this->get(route('operations.incidents.create'))->assertRedirect();
+    $this->get(route('operations.incidents.start'))->assertRedirect();
     $this->get(route('operations.admin.users'))->assertRedirect();
+    $this->get(route('operations.incidents.create'))->assertForbidden();
 });
 
 test('municipal operator can open operational screens', function () use ($operationsParameterRouteNames): void {
@@ -55,6 +56,7 @@ test('municipal operator can open operational screens', function () use ($operat
     $this->get(route('operations.cadastro.shifts'))->assertOk();
     $this->get(route('operations.catalog.vehicles'))->assertRedirect(route('operations.cadastro.vehicles'));
     $this->get(route('operations.catalog.staff'))->assertRedirect(route('operations.cadastro.staff'));
+    $this->get(route('operations.incidents.start'))->assertOk();
     $this->get(route('operations.incidents.create'))->assertOk();
     $this->get(route('operations.admin.users'))->assertForbidden();
 });
@@ -67,6 +69,7 @@ test('central operator can open operational screens', function () use ($operatio
 
     $this->get(route('operations.dispatch'))->assertOk();
     $this->get(route('operations.incidents.index'))->assertOk();
+    $this->get(route('operations.incidents.start'))->assertOk();
     $this->get(route('operations.incidents.create'))->assertOk();
     foreach ($operationsParameterRouteNames as $name) {
         $this->get(route($name))->assertOk();

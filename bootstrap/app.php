@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureOperationalCentral;
+use App\Http\Middleware\InitializeOperationalTenancy;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,8 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'operational.tenant' => \App\Http\Middleware\InitializeOperationalTenancy::class,
-            'operational.central' => \App\Http\Middleware\EnsureOperationalCentral::class,
+            'operational.tenant' => InitializeOperationalTenancy::class,
+            'operational.central' => EnsureOperationalCentral::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'integrations/calls/incident-intake',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

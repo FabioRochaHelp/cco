@@ -9,6 +9,7 @@ use App\Domain\Operations\DTOs\CreateIncidentDTO;
 use App\Domain\Operations\Enums\CallType;
 use App\Models\Incident;
 use App\Models\Nature;
+use App\Support\Operations\IncidentPhoneNormalizer;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\QueryException;
@@ -67,11 +68,104 @@ final class IncidentCreate extends Component
 
     public string $message = '';
 
+    /** Fluxo PBX/webhook: formulário sem login (URL assinada + sessão até expirar). */
+    public bool $guest_intake = false;
+
+    /** Incorporado no modal da Central (dados via Reverb + preenchimento; operador autenticado). */
+    public bool $embeddedInModal = false;
+
     public function mount(): void
     {
-        Gate::authorize('viewAny', Incident::class);
-        abort_unless(Auth::user()?->hasOperationalAbility('incident.create'), 403);
         $this->occurred_at = now()->format('Y-m-d\TH:i');
+
+        if ($this->embeddedInModal) {
+            session()->forget('operations.incident_create_guest');
+            $this->guest_intake = false;
+
+            $user = Auth::user();
+            abort_unless($user !== null, 403);
+            abort_unless(Gate::forUser($user)->allows('viewAny', Incident::class), 403);
+            abort_unless($user->hasOperationalAbility('incident.create'), 403);
+
+            $this->hydrateEmbeddedPrefillFromProps();
+
+            return;
+        }
+
+        if (request()->hasValidSignature()) {
+            $this->hydrateFromSignedQuery(request()->query());
+            session()->put('operations.incident_create_guest', [
+                'expires_at' => (int) request()->query('expires', 0),
+            ]);
+            $this->guest_intake = true;
+
+            return;
+        }
+
+        if ($this->guestSignedLinkSessionValid()) {
+            $this->guest_intake = true;
+
+            return;
+        }
+
+        session()->forget('operations.incident_create_guest');
+
+        $user = Auth::user();
+        abort_unless($user !== null, 403);
+        abort_unless(Gate::forUser($user)->allows('viewAny', Incident::class), 403);
+        abort_unless($user->hasOperationalAbility('incident.create'), 403);
+
+        if ($intake = session()->pull('operations.incident_intake')) {
+            $this->hydrateFromSessionIntake($intake);
+        }
+    }
+
+    /** @param  array<string, mixed>  $query */
+    private function hydrateFromSignedQuery(array $query): void
+    {
+        if (isset($query['phone'])) {
+            $this->caller_phone = IncidentPhoneNormalizer::normalize((string) $query['phone']);
+        }
+        if (! empty($query['name'])) {
+            $this->caller_name = (string) $query['name'];
+        }
+        if (isset($query['lat']) && (string) $query['lat'] !== '') {
+            $this->latitude = (string) $query['lat'];
+        }
+        if (isset($query['lng']) && (string) $query['lng'] !== '') {
+            $this->longitude = (string) $query['lng'];
+        }
+        if (! empty($query['received_at'])) {
+            try {
+                $this->call_received_at = CarbonImmutable::parse((string) $query['received_at'])->format('Y-m-d\TH:i');
+            } catch (Throwable) {
+                //
+            }
+        }
+        if (! empty($query['ref'])) {
+            $this->reference_notes = (string) $query['ref'];
+        }
+    }
+
+    /** @param  array<string, mixed>  $intake */
+    private function hydrateFromSessionIntake(array $intake): void
+    {
+        if (! empty($intake['caller_phone'])) {
+            $this->caller_phone = IncidentPhoneNormalizer::normalize((string) $intake['caller_phone']);
+        }
+    }
+
+    private function hydrateEmbeddedPrefillFromProps(): void
+    {
+        $this->caller_phone = IncidentPhoneNormalizer::normalize((string) ($this->caller_phone ?? ''));
+
+        if ($this->call_received_at !== null && $this->call_received_at !== '') {
+            try {
+                $this->call_received_at = CarbonImmutable::parse((string) $this->call_received_at)->format('Y-m-d\TH:i');
+            } catch (Throwable) {
+                $this->call_received_at = '';
+            }
+        }
     }
 
     /**
@@ -91,8 +185,11 @@ final class IncidentCreate extends Component
 
         $callReceivedAt = $attributes['call_received_at'] ?? null;
 
+        $callerPhone = IncidentPhoneNormalizer::normalize((string) ($attributes['caller_phone'] ?? ''));
+
         return array_merge($attributes, [
             'call_received_at' => ($callReceivedAt === '' || $callReceivedAt === null) ? null : $callReceivedAt,
+            'caller_phone' => $callerPhone,
             'nature_id' => $natureId,
         ]);
     }
@@ -101,6 +198,12 @@ final class IncidentCreate extends Component
     {
         $this->resetErrorBag();
 
+        if ($this->guest_intake && ! $this->guestSignedLinkSessionValid()) {
+            $this->addError('scope', __('O tempo deste formulário expirou. Peça um novo link pela central ou entre no sistema.'));
+
+            return;
+        }
+
         if ($this->latitude === '') {
             $this->latitude = null;
         }
@@ -108,10 +211,12 @@ final class IncidentCreate extends Component
             $this->longitude = null;
         }
 
-        if (! Gate::allows('createOperational')) {
-            $this->addError('scope', __('Sem permissão para registrar ocorrência.'));
+        if (! $this->guestSignedLinkSessionValid()) {
+            if (! Gate::allows('createOperational')) {
+                $this->addError('scope', __('Sem permissão para registrar ocorrência.'));
 
-            return;
+                return;
+            }
         }
 
         $validated = $this->validate([
@@ -125,7 +230,7 @@ final class IncidentCreate extends Component
             'city' => ['nullable', 'string', 'max:128'],
             'reference_notes' => ['nullable', 'string', 'max:2000'],
             'caller_name' => ['nullable', 'string', 'max:255'],
-            'caller_phone' => ['nullable', 'string', 'max:64'],
+            'caller_phone' => ['required', 'string', 'min:8', 'max:64'],
             'patient_name' => ['nullable', 'string', 'max:255'],
             'patient_age' => ['nullable', 'integer', 'min:0', 'max:130'],
             'patient_sex' => ['nullable', 'string', 'max:16'],
@@ -184,6 +289,24 @@ final class IncidentCreate extends Component
             return;
         }
 
+        if ($this->embeddedInModal) {
+            $this->dispatch('call-intake-incident-saved', incidentId: $incident->id);
+
+            return;
+        }
+
+        if ($this->guestSignedLinkSessionValid()) {
+            session()->forget('operations.incident_create_guest');
+            $this->guest_intake = false;
+            session()->flash('registered_incident', [
+                'talao' => $incident->talao,
+                'dispatch_year' => $incident->dispatch_year,
+            ]);
+            $this->redirect(route('operations.incidents.registered-guest'), navigate: true);
+
+            return;
+        }
+
         $this->redirect(route('operations.incidents.show', $incident), navigate: true);
     }
 
@@ -193,5 +316,14 @@ final class IncidentCreate extends Component
             'natures' => Nature::query()->orderBy('name')->get(),
             'callTypes' => CallType::cases(),
         ]);
+    }
+
+    private function guestSignedLinkSessionValid(): bool
+    {
+        $guest = session()->get('operations.incident_create_guest');
+
+        return is_array($guest)
+            && isset($guest['expires_at'])
+            && (int) $guest['expires_at'] >= now()->timestamp;
     }
 }

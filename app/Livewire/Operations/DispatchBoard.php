@@ -28,6 +28,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use RuntimeException;
@@ -136,6 +137,13 @@ final class DispatchBoard extends Component
         $this->showDispatchModal = false;
         $this->dispatchingIncidentId = null;
         $this->modalVehicleId = null;
+    }
+
+    /** Modal PBX é tratado por `OperationalCallIntakeBridge` no layout; aqui só atualizamos o aviso da Central. */
+    #[On('call-intake-incident-saved')]
+    public function onCallIntakeIncidentSaved(int $incidentId): void
+    {
+        $this->boardMessage = __('Ocorrência registrada (#:id).', ['id' => $incidentId]);
     }
 
     public function confirmDispatch(DispatchUnitAction $action): void

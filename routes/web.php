@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Operations\IncidentCallIntakeWebhookController;
 use App\Livewire\Operations\Admin\SystemUserManage;
 use App\Livewire\Operations\Cadastro\MunicipioManage;
 use App\Livewire\Operations\Cadastro\ShiftManage;
 use App\Livewire\Operations\DispatchBoard;
 use App\Livewire\Operations\FleetShifts;
+use App\Livewire\Operations\IncidentCallStart;
 use App\Livewire\Operations\IncidentCreate;
 use App\Livewire\Operations\IncidentIndex;
 use App\Livewire\Operations\IncidentOperationalDetail;
@@ -22,6 +24,16 @@ use App\Livewire\Operations\VehicleManage;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+
+Route::post('integrations/calls/incident-intake', IncidentCallIntakeWebhookController::class)
+    ->name('integrations.calls.incident-intake');
+
+Route::middleware(['operational.tenant'])
+    ->prefix('operations')
+    ->group(function (): void {
+        Route::get('/incidents/create', IncidentCreate::class)->name('operations.incidents.create');
+        Route::view('/incidents/registered', 'operations.guest-incident-registered')->name('operations.incidents.registered-guest');
+    });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
@@ -66,7 +78,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::get('/dispatch', DispatchBoard::class)->name('operations.dispatch');
             Route::get('/incidents', IncidentIndex::class)->name('operations.incidents.index');
-            Route::get('/incidents/create', IncidentCreate::class)->name('operations.incidents.create');
+            Route::get('/incidents/start', IncidentCallStart::class)->name('operations.incidents.start');
             Route::get('/incidents/{incident}', IncidentOperationalDetail::class)->name('operations.incidents.show');
             Route::get('/fleet', FleetShifts::class)->name('operations.fleet');
         });

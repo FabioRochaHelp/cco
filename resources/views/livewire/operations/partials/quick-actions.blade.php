@@ -43,7 +43,7 @@
             {{ __('Cadastro — efetivo') }}
         </flux:button>
         @if (Gate::check('createOperational'))
-            <flux:button size="sm" variant="ghost" icon="plus-circle" :href="route('operations.incidents.create')" wire:navigate>
+            <flux:button size="sm" variant="ghost" icon="plus-circle" :href="route('operations.incidents.start')" wire:navigate>
                 {{ __('Cadastro — ocorrência') }}
             </flux:button>
         @endif
