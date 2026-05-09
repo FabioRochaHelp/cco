@@ -10,18 +10,18 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Talão único por ano e município (docs/migracao/regras-negocio).
+ * Talão único por ano em todo o sistema (`unique(dispatch_year, talao)` em `incidents`).
  */
 final class TalaoIssuer
 {
-    public function next(int $municipioId, CarbonInterface $occurredAt): int
+    public function next(CarbonInterface $occurredAt): int
     {
         $year = (int) $occurredAt->format('Y');
-        $lockKey = "talao:{$municipioId}:{$year}";
+        $lockKey = "talao:global:{$year}";
 
-        return (int) Cache::lock($lockKey, 10)->block(5, function () use ($municipioId, $year): int {
+        return (int) Cache::lock($lockKey, 10)->block(5, function () use ($year): int {
+            // Inclui soft-deletes: o índice único no banco cobre todas as linhas.
             $max = Incident::withoutGlobalScopes()
-                ->where('municipio_id', $municipioId)
                 ->where('dispatch_year', $year)
                 ->max('talao');
 
@@ -30,14 +30,12 @@ final class TalaoIssuer
     }
 
     /** Para migração sem Redis/cache lock (SQLite dev). */
-    public function nextWithinTransaction(int $municipioId, CarbonInterface $occurredAt): int
+    public function nextWithinTransaction(CarbonInterface $occurredAt): int
     {
         $year = (int) $occurredAt->format('Y');
 
         $max = DB::table('incidents')
-            ->where('municipio_id', $municipioId)
             ->where('dispatch_year', $year)
-            ->whereNull('deleted_at')
             ->max('talao');
 
         return $max ? ((int) $max) + 1 : 1;

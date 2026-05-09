@@ -21,10 +21,15 @@ final class IncidentCreated implements ShouldBroadcast, ShouldDispatchAfterCommi
 
     public function broadcastOn(): array
     {
-        return [
-            new PrivateChannel('operations.municipio.'.$this->incident->municipio_id),
+        $channels = [
             new PrivateChannel('operations.dispatch'),
         ];
+
+        if ($this->incident->municipio_id !== null) {
+            $channels[] = new PrivateChannel('operations.municipio.'.$this->incident->municipio_id);
+        }
+
+        return $channels;
     }
 
     public function broadcastAs(): string

@@ -20,7 +20,15 @@ Broadcast::channel('incidents.{incidentId}', function ($user, string $incidentId
 
     $incident = Incident::withoutGlobalScopes()->find($incidentId);
 
-    return $incident !== null && $user->canAccessOperationalMunicipio((int) $incident->municipio_id);
+    if ($incident === null) {
+        return false;
+    }
+
+    if ($incident->municipio_id === null) {
+        return true;
+    }
+
+    return $user->canAccessOperationalMunicipio((int) $incident->municipio_id);
 });
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {

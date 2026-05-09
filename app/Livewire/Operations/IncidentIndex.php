@@ -6,7 +6,9 @@ namespace App\Livewire\Operations;
 
 use App\Domain\Operations\Enums\IncidentStatus;
 use App\Models\Incident;
+use App\Support\Operations\OperationalIncidentVisibility;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -45,6 +47,8 @@ final class IncidentIndex extends Component
             ->with(['municipio', 'nature'])
             ->orderByDesc('occurred_at');
 
+        OperationalIncidentVisibility::constrainListing($query, Auth::user());
+
         $query = match ($this->filter) {
             'open' => $query->where('status', IncidentStatus::Open),
             'field' => $query->whereIn('status', [IncidentStatus::Dispatched, IncidentStatus::InProgress]),
@@ -70,6 +74,7 @@ final class IncidentIndex extends Component
     private function scopedCounts(): array
     {
         $base = Incident::query();
+        OperationalIncidentVisibility::constrainListing($base, Auth::user());
 
         return [
             'open' => (clone $base)->where('status', IncidentStatus::Open)->count(),

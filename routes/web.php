@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Livewire\Operations\Admin\SystemUserManage;
+use App\Livewire\Operations\Cadastro\MunicipioManage;
+use App\Livewire\Operations\Cadastro\ShiftManage;
 use App\Livewire\Operations\DispatchBoard;
 use App\Livewire\Operations\FleetShifts;
 use App\Livewire\Operations\IncidentCreate;
@@ -14,8 +17,6 @@ use App\Livewire\Operations\Parameters\NatureParameterManage;
 use App\Livewire\Operations\Parameters\OperationalSupportParameterManage;
 use App\Livewire\Operations\Parameters\ProcedureParameterManage;
 use App\Livewire\Operations\Parameters\VictimTypeParameterManage;
-use App\Livewire\Operations\Cadastro\MunicipioManage;
-use App\Livewire\Operations\Cadastro\ShiftManage;
 use App\Livewire\Operations\StaffManage;
 use App\Livewire\Operations\VehicleManage;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +50,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/viaturas', VehicleManage::class)->name('operations.cadastro.vehicles');
             Route::get('/efetivo', StaffManage::class)->name('operations.cadastro.staff');
             Route::get('/turnos', ShiftManage::class)->name('operations.cadastro.shifts');
+        });
+
+    Route::middleware(['operational.tenant'])
+        ->prefix('operations/admin')
+        ->group(function (): void {
+            Route::get('/usuarios', SystemUserManage::class)->name('operations.admin.users');
         });
 
     Route::middleware(['operational.tenant'])

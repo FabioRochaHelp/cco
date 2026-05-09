@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Domain\Operations\Enums\IncidentStatus;
-use App\Models\Concerns\BelongsToMunicipio;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Incident extends Model
 {
-    use BelongsToMunicipio, SoftDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
         'municipio_id',
@@ -67,6 +66,11 @@ class Incident extends Model
             'returned_base_at' => 'datetime',
             'is_qta' => 'boolean',
         ];
+    }
+
+    public function municipio(): BelongsTo
+    {
+        return $this->belongsTo(Municipio::class);
     }
 
     public function nature(): BelongsTo

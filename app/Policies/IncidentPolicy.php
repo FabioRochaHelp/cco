@@ -25,6 +25,10 @@ final class IncidentPolicy
             return false;
         }
 
+        if ($incident->municipio_id === null) {
+            return true;
+        }
+
         return $user->canAccessOperationalMunicipio((int) $incident->municipio_id);
     }
 
@@ -34,12 +38,20 @@ final class IncidentPolicy
             return false;
         }
 
+        if ($incident->municipio_id === null) {
+            return true;
+        }
+
         return $user->canAccessOperationalMunicipio((int) $incident->municipio_id);
     }
 
     public function advanceStage(User $user, Incident $incident): bool
     {
         if (! $user->hasOperationalAbility('incident.advance_stage')) {
+            return false;
+        }
+
+        if ($incident->municipio_id === null) {
             return false;
         }
 
@@ -52,17 +64,21 @@ final class IncidentPolicy
             return false;
         }
 
+        if ($incident->municipio_id === null) {
+            return false;
+        }
+
         return $user->canAccessOperationalMunicipio((int) $incident->municipio_id);
     }
 
-    public function createOperational(User $user, ?int $municipioId): bool
+    public function createOperational(User $user, ?int $municipioId = null): bool
     {
         if (! $user->hasOperationalAbility('incident.create')) {
             return false;
         }
 
         if ($municipioId === null) {
-            return false;
+            return true;
         }
 
         return $user->canAccessOperationalMunicipio($municipioId);

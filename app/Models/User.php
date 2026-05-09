@@ -68,6 +68,17 @@ class User extends Authenticatable
         return $this->users_type_legacy !== null && $this->users_type_legacy <= 2;
     }
 
+    /**
+     * Administrador da central — gestão de identidades/usuários do sistema.
+     *
+     * @see docs/migracao/entidades.md — `users_type <= 2` como acesso central; o perfil 1
+     *      corresponde ao nível administrativo que mantém cadastro de usuários.
+     */
+    public function isCentralAdministrator(): bool
+    {
+        return $this->users_type_legacy === 1;
+    }
+
     /** @return list<string> */
     public function operationalAbilities(): array
     {

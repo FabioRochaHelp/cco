@@ -1,34 +1,27 @@
 @php use Illuminate\Support\Facades\Gate; @endphp
 
-<div class="grid gap-4 lg:grid-cols-3">
-    <flux:card class="space-y-4">
-        <flux:subheading>{{ __('Ingestão') }}</flux:subheading>
-        @if (Gate::check('createOperational', $this->resolveOperationalMunicipioId()))
-            <flux:text size="sm">{{ __('Registro rápido para exercício do fluxo (usa a primeira natureza do escopo).') }}</flux:text>
-            <flux:button variant="primary" icon="plus" wire:click="createDemoIncident">{{ __('Nova ocorrência (demo)') }}</flux:button>
-        @else
-            <flux:callout variant="warning">{{ __('Defina o município/base ou confira permissões para registrar ocorrência.') }}</flux:callout>
-        @endif
-    </flux:card>
+<div class="mx-auto flex w-full max-w-4xl flex-col gap-4">
+    <div class="grid gap-4 md:grid-cols-2">
+        <flux:card class="space-y-4">
+            <flux:subheading>{{ __('Ingestão') }}</flux:subheading>
+            @if (Gate::check('createOperational'))
+                <flux:text size="sm">{{ __('Registro rápido para exercício do fluxo (usa a primeira natureza cadastrada).') }}</flux:text>
+                <flux:button variant="primary" icon="plus" wire:click="createDemoIncident">{{ __('Nova ocorrência (demo)') }}</flux:button>
+            @else
+                <flux:callout variant="warning">{{ __('Sem permissão para registrar ocorrência.') }}</flux:callout>
+            @endif
+        </flux:card>
 
-    <flux:card class="space-y-4 lg:col-span-2">
-        <flux:subheading>{{ __('Empenho') }}</flux:subheading>
-        <div class="grid gap-4 md:grid-cols-2 md:items-end">
-            <flux:select wire:model.number="selectedVehicleId" :label="__('Viatura em turno disponível')">
-                <flux:select.option value="">{{ __('Selecione') }}</flux:select.option>
-                @foreach ($availableShifts as $shift)
-                    <flux:select.option value="{{ $shift->vehicle_id }}">
-                        {{ $shift->vehicle?->prefix ?? '—' }} · {{ $shift->vehicle?->plate ?? __('Sem placa') }} · #{{ $shift->id }}
-                    </flux:select.option>
-                @endforeach
-            </flux:select>
-            <flux:button variant="filled" icon="paper-airplane" wire:click="dispatchIncident">
-                {{ __('Empenhar na primeira ocorrência da fila') }}
-            </flux:button>
-        </div>
-    </flux:card>
+        <flux:card class="space-y-4">
+            <flux:subheading>{{ __('Empenho') }}</flux:subheading>
+            <flux:text size="sm" class="text-slate-600 dark:text-slate-400">
+                {{ __('Clique numa linha da fila de ocorrências abaixo para abrir o modal e escolher o turno (viatura) que vai atender.') }}
+            </flux:text>
+            <flux:callout variant="info">{{ __('A coluna à esquerda é só referência de turnos. No cadastro da ocorrência não há vínculo com base nem com turno; a base aparece ao empenhar, ao escolher a viatura no modal.') }}</flux:callout>
+        </flux:card>
+    </div>
 
-    <div class="flex flex-wrap gap-2 lg:col-span-3">
+    <div class="flex flex-wrap gap-2">
         <flux:button size="sm" variant="ghost" icon="rectangle-stack" :href="route('operations.incidents.index')" wire:navigate>
             {{ __('Lista de ocorrências') }}
         </flux:button>
@@ -49,7 +42,7 @@
         <flux:button size="sm" variant="ghost" icon="users" :href="route('operations.cadastro.staff')" wire:navigate>
             {{ __('Cadastro — efetivo') }}
         </flux:button>
-        @if (Gate::check('createOperational', $this->resolveOperationalMunicipioId()))
+        @if (Gate::check('createOperational'))
             <flux:button size="sm" variant="ghost" icon="plus-circle" :href="route('operations.incidents.create')" wire:navigate>
                 {{ __('Cadastro — ocorrência') }}
             </flux:button>

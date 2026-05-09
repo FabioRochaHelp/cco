@@ -21,6 +21,8 @@ use App\Models\IncidentEvent;
 use App\Models\Municipio;
 use App\Models\Nature;
 use App\Models\Shift;
+use App\Models\Vehicle;
+use App\Support\Operations\OperationalIncidentVisibility;
 use App\Support\Operations\OperationalMunicipioSelection;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +36,12 @@ use RuntimeException;
 #[Title('Central operacional')]
 final class DispatchBoard extends Component
 {
-    public ?int $selectedVehicleId = null;
+    /** Modal de empenho: ocorrência escolhida na fila. */
+    public bool $showDispatchModal = false;
+
+    public ?int $dispatchingIncidentId = null;
+
+    public ?int $modalVehicleId = null;
 
     /** ID numérico em `municipios` para usuários centrais (sessão). */
     public ?string $selectedOperationalMunicipioId = null;
@@ -70,24 +77,17 @@ final class DispatchBoard extends Component
         $this->resetErrorBag();
         $this->boardMessage = '';
 
-        $municipioId = $this->resolveOperationalMunicipioId();
-        if ($municipioId === null) {
-            $this->addError('tenant', 'Selecione o município/base operacional.');
-
-            return;
-        }
-
         $nature = Nature::query()->orderBy('id')->first();
         if ($nature === null) {
-            $this->addError('tenant', 'Cadastre ao menos uma natureza para o município.');
+            $this->addError('tenant', 'Cadastre ao menos uma natureza.');
 
             return;
         }
 
-        Gate::authorize('createOperational', $municipioId);
+        Gate::authorize('createOperational');
 
         $dto = new CreateIncidentDTO(
-            municipioId: $municipioId,
+            municipioId: null,
             natureId: $nature->id,
             description: 'Ocorrência demonstrativa (CCO)',
             addressLine: null,
@@ -114,22 +114,54 @@ final class DispatchBoard extends Component
         }
     }
 
-    public function dispatchIncident(DispatchUnitAction $action): void
+    public function openDispatchModal(int $incidentId): void
+    {
+        $this->resetErrorBag();
+
+        /** @var Incident|null $incident */
+        $incident = Incident::query()->find($incidentId);
+        if ($incident === null || $incident->status !== IncidentStatus::Open) {
+            return;
+        }
+
+        Gate::authorize('dispatchUnit', $incident);
+
+        $this->dispatchingIncidentId = $incident->id;
+        $this->modalVehicleId = null;
+        $this->showDispatchModal = true;
+    }
+
+    public function closeDispatchModal(): void
+    {
+        $this->showDispatchModal = false;
+        $this->dispatchingIncidentId = null;
+        $this->modalVehicleId = null;
+    }
+
+    public function confirmDispatch(DispatchUnitAction $action): void
     {
         $this->resetErrorBag();
         $this->boardMessage = '';
 
-        if ($this->selectedVehicleId === null) {
-            $this->addError('vehicle', 'Selecione uma viatura em turno disponível.');
+        $this->validate(
+            [
+                'modalVehicleId' => ['required', 'integer'],
+            ],
+            [
+                'modalVehicleId.required' => __('Selecione a viatura em turno.'),
+            ],
+        );
+
+        if ($this->dispatchingIncidentId === null) {
+            $this->closeDispatchModal();
 
             return;
         }
 
         /** @var Incident|null $incident */
-        $incident = Incident::query()->where('status', IncidentStatus::Open)->orderByDesc('occurred_at')->first();
-
-        if ($incident === null) {
-            $this->addError('board', 'Não há ocorrências abertas para despacho.');
+        $incident = Incident::query()->find($this->dispatchingIncidentId);
+        if ($incident === null || $incident->status !== IncidentStatus::Open) {
+            $this->closeDispatchModal();
 
             return;
         }
@@ -139,11 +171,12 @@ final class DispatchBoard extends Component
         try {
             $action->execute(new DispatchUnitDTO(
                 incidentId: $incident->id,
-                vehicleId: $this->selectedVehicleId,
+                vehicleId: $this->modalVehicleId,
                 note: null,
                 operatorUserId: Auth::id(),
             ));
-            $this->boardMessage = 'Equipe empenhada.';
+            $this->boardMessage = __('Equipe empenhada.');
+            $this->closeDispatchModal();
         } catch (RuntimeException $e) {
             $this->addError('board', $e->getMessage());
         }
@@ -210,41 +243,82 @@ final class DispatchBoard extends Component
             ? Municipio::query()->orderBy('razao_social')->get()
             : collect();
 
-        $openIncidents = Incident::query()
-            ->with('municipio')
-            ->where('status', IncidentStatus::Open)
-            ->orderByDesc('occurred_at')
-            ->get();
+        $mid = OperationalMunicipioSelection::current(Auth::user());
 
-        $availableShifts = Shift::query()
-            ->with('vehicle')
+        $openIncidentsQuery = Incident::query()
+            ->with('municipio')
+            ->where('status', IncidentStatus::Open);
+
+        OperationalIncidentVisibility::constrainListing($openIncidentsQuery, Auth::user());
+
+        $openIncidents = $openIncidentsQuery->clone()->orderByDesc('occurred_at')->get();
+
+        $availableShiftsQuery = Shift::query()
+            ->with(['vehicle', 'municipio'])
             ->operationalAvailability()
-            ->orderBy('id')
-            ->get();
+            ->when($mid !== null, fn ($q) => $q->where('municipio_id', $mid));
+
+        $availableShifts = $availableShiftsQuery->clone()->orderBy('id')->get();
+
+        /** Viaturas cadastradas sem turno ainda vigente (`ends_at >= now()`). */
+        $vehiclesWithoutShiftQuery = Vehicle::query()
+            ->with('municipio')
+            ->whereDoesntHave(
+                'shifts',
+                fn ($q) => $q->where('ends_at', '>=', now()),
+            )
+            ->when($mid !== null, fn ($q) => $q->where('municipio_id', $mid));
+
+        $vehiclesWithoutShift = $vehiclesWithoutShiftQuery->orderBy('prefix')->limit(120)->get();
 
         $kanbanDispatches = IncidentDispatch::query()
             ->with(['incident', 'shift.vehicle'])
             ->whereNull('deleted_at')
+            ->when($mid !== null, fn ($q) => $q->where('municipio_id', $mid))
             ->orderBy('id')
             ->get()
             ->groupBy(fn (IncidentDispatch $d) => $d->stage->value);
 
         $recentTimeline = IncidentEvent::query()
             ->with(['incident', 'actor'])
+            ->when($mid !== null, fn ($q) => $q->where(static function ($w) use ($mid): void {
+                $w->where('municipio_id', $mid)->orWhereNull('municipio_id');
+            }))
             ->latest('recorded_at')
             ->limit(25)
             ->get();
 
         $stats = [
-            'open_incidents' => Incident::query()->where('status', IncidentStatus::Open)->count(),
-            'active_dispatches' => IncidentDispatch::query()->whereNull('deleted_at')->count(),
-            'available_units' => Shift::query()->operationalAvailability()->count(),
+            'open_incidents' => $openIncidentsQuery->clone()->count(),
+            'active_dispatches' => IncidentDispatch::query()
+                ->whereNull('deleted_at')
+                ->when($mid !== null, fn ($q) => $q->where('municipio_id', $mid))
+                ->count(),
+            'available_units' => $availableShiftsQuery->clone()->count(),
+            'idle_vehicles' => $vehiclesWithoutShiftQuery->clone()->count(),
         ];
+
+        $modalIncident = $this->dispatchingIncidentId !== null
+            ? Incident::query()->with('municipio')->find($this->dispatchingIncidentId)
+            : null;
+
+        $modalShifts = $modalIncident !== null
+            ? (
+                $modalIncident->municipio_id === null
+                    ? $availableShifts
+                    : $availableShifts->filter(
+                        fn (Shift $s): bool => (int) $s->municipio_id === (int) $modalIncident->municipio_id,
+                    )->values()
+            )
+            : collect();
 
         return view('livewire.operations.dispatch-board', [
             'municipioOptions' => $municipioOptions,
             'openIncidents' => $openIncidents,
             'availableShifts' => $availableShifts,
+            'vehiclesWithoutShift' => $vehiclesWithoutShift,
+            'modalIncident' => $modalIncident,
+            'modalShifts' => $modalShifts,
             'kanbanDispatches' => $kanbanDispatches,
             'orderedStages' => DispatchStage::ordered(),
             'recentTimeline' => $recentTimeline,

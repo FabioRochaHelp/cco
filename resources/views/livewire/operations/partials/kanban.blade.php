@@ -4,9 +4,10 @@
 
 <div>
     <flux:subheading class="mb-4 text-slate-700 dark:text-slate-300">{{ __('Kanban — etapas do deslocamento') }}</flux:subheading>
-    <div class="grid gap-4 lg:grid-cols-3 xl:grid-cols-6">
+    <div class="-mx-1 overflow-x-auto pb-2">
+        <div class="flex w-max max-w-none gap-3 px-1">
         @foreach ($orderedStages as $stage)
-            <flux:card class="cco-kanban-column flex min-h-52 flex-col gap-3">
+            <flux:card class="cco-kanban-column flex min-h-52 w-[13.5rem] shrink-0 flex-col gap-3 sm:w-[14rem]">
                 <div class="flex items-center justify-between gap-2">
                     <flux:badge color="cyan">{{ $stage->label() }}</flux:badge>
                     <flux:text size="sm" class="tabular-nums text-slate-500">{{ $stage->index() + 1 }}/6</flux:text>
@@ -59,5 +60,6 @@
                 </div>
             </flux:card>
         @endforeach
+        </div>
     </div>
 </div>

@@ -45,15 +45,23 @@ final class DispatchUnitAction
                     throw new RuntimeException('Ocorrência já possui despacho ativo.');
                 }
 
-                /** @var Shift|null $shift */
-                $shift = Shift::query()
+                $shiftQuery = Shift::query()
                     ->where('vehicle_id', $dto->vehicleId)
-                    ->where('municipio_id', $incident->municipio_id)
-                    ->operationalAvailability()
-                    ->first();
+                    ->operationalAvailability();
+
+                if ($incident->municipio_id !== null) {
+                    $shiftQuery->where('municipio_id', $incident->municipio_id);
+                }
+
+                $shift = $shiftQuery->first();
 
                 if ($shift === null) {
                     throw new RuntimeException('Nenhum turno disponível para esta viatura.');
+                }
+
+                if ($incident->municipio_id !== null
+                    && (int) $incident->municipio_id !== (int) $shift->municipio_id) {
+                    throw new RuntimeException('Viatura não pertence à base desta ocorrência.');
                 }
 
                 $busy = IncidentDispatch::query()
@@ -68,7 +76,7 @@ final class DispatchUnitAction
                 $now = now();
 
                 $dispatch = IncidentDispatch::create([
-                    'municipio_id' => $incident->municipio_id,
+                    'municipio_id' => $shift->municipio_id,
                     'incident_id' => $incident->id,
                     'shift_id' => $shift->id,
                     'stage' => DispatchStage::Dispatched,
@@ -78,6 +86,7 @@ final class DispatchUnitAction
                 $shift->update(['status' => ShiftStatus::Assigned, 'status_legacy' => 2]);
 
                 $incident->update([
+                    'municipio_id' => $shift->municipio_id,
                     'status' => IncidentStatus::Dispatched,
                     'primary_shift_id' => $shift->id,
                     'dispatched_at' => $now,

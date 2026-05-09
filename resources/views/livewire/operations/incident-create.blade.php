@@ -10,13 +10,19 @@
         </div>
     </div>
 
-    @if ($scopeMunicipioId === null)
-        <flux:callout variant="warning">{{ __('Selecione o município/base na central antes de registrar a ocorrência.') }}</flux:callout>
-    @endif
+    <flux:callout variant="info">
+        {{ __('O cadastro não vincula a ocorrência a uma base (município). A base é definida no empenho, ao escolher o turno/viatura no CCO.') }}
+    </flux:callout>
 
-    @error('scope')
-        <flux:callout variant="danger">{{ $message }}</flux:callout>
-    @enderror
+    @if ($errors->any())
+        <flux:callout variant="danger">
+            <ul class="mt-1 list-inside list-disc space-y-1 text-sm">
+                @foreach ($errors->all() as $message)
+                    <li>{{ $message }}</li>
+                @endforeach
+            </ul>
+        </flux:callout>
+    @endif
 
     <flux:card>
         <form wire:submit="save" class="grid gap-4 lg:grid-cols-2">
@@ -52,12 +58,6 @@
 
             <flux:input wire:model.number="expected_victim_total" type="number" :label="__('Total de vítimas (estimado)')" />
 
-            <flux:select wire:model="protected_area_id" :label="__('Área protegida (opcional)')" placeholder="{{ __('Nenhuma') }}">
-                @foreach ($protectedAreas as $ap)
-                    <flux:select.option value="{{ $ap->id }}">{{ $ap->name }}</flux:select.option>
-                @endforeach
-            </flux:select>
-
             <flux:input wire:model="latitude" :label="__('Latitude')" />
             <flux:input wire:model="longitude" :label="__('Longitude')" />
 
@@ -68,7 +68,7 @@
             </div>
 
             <div class="lg:col-span-2">
-                <flux:button type="submit" variant="primary" :disabled="$scopeMunicipioId === null">{{ __('Registrar ocorrência') }}</flux:button>
+                <flux:button type="submit" variant="primary" wire:loading.attr="disabled">{{ __('Registrar ocorrência') }}</flux:button>
             </div>
         </form>
     </flux:card>

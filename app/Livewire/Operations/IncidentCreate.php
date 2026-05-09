@@ -9,16 +9,16 @@ use App\Domain\Operations\DTOs\CreateIncidentDTO;
 use App\Domain\Operations\Enums\CallType;
 use App\Models\Incident;
 use App\Models\Nature;
-use App\Models\ProtectedArea;
-use App\Support\Operations\OperationalMunicipioSelection;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Throwable;
 
 /** Cadastro de ocorrência (equivalente a rotas legadas `ocorrencia/create`). */
 #[Layout('layouts.app')]
@@ -61,8 +61,6 @@ final class IncidentCreate extends Component
 
     public ?int $total_death_count = null;
 
-    public string $protected_area_id = '';
-
     public ?string $latitude = '';
 
     public ?string $longitude = '';
@@ -76,28 +74,44 @@ final class IncidentCreate extends Component
         $this->occurred_at = now()->format('Y-m-d\TH:i');
     }
 
-    private function municipioId(): ?int
+    /**
+     * Normaliza entradas vazias para nullable antes das regras (`date`, etc.).
+     *
+     * @param  array<string, mixed>  $attributes  Dados vindos das propriedades públicas do componente.
+     * @return array<string, mixed>
+     */
+    protected function prepareForValidation($attributes)
     {
-        return OperationalMunicipioSelection::current(Auth::user());
+        $natureId = $attributes['nature_id'] ?? null;
+        if ($natureId === '' || $natureId === null) {
+            $natureId = null;
+        } else {
+            $natureId = (int) $natureId;
+        }
+
+        $callReceivedAt = $attributes['call_received_at'] ?? null;
+
+        return array_merge($attributes, [
+            'call_received_at' => ($callReceivedAt === '' || $callReceivedAt === null) ? null : $callReceivedAt,
+            'nature_id' => $natureId,
+        ]);
     }
 
     public function save(CreateOperationalIncidentAction $action): void
     {
         $this->resetErrorBag();
-        $mid = $this->municipioId();
-        if ($mid === null) {
-            $this->addError('scope', __('Defina o município na central ou use um usuário municipal.'));
-
-            return;
-        }
-
-        Gate::authorize('createOperational', $mid);
 
         if ($this->latitude === '') {
             $this->latitude = null;
         }
         if ($this->longitude === '') {
             $this->longitude = null;
+        }
+
+        if (! Gate::allows('createOperational')) {
+            $this->addError('scope', __('Sem permissão para registrar ocorrência.'));
+
+            return;
         }
 
         $validated = $this->validate([
@@ -119,11 +133,6 @@ final class IncidentCreate extends Component
             'expected_victim_total' => ['nullable', 'integer', 'min:0', 'max:999'],
             'is_qta' => ['boolean'],
             'total_death_count' => ['nullable', 'integer', 'min:0', 'max:999'],
-            'protected_area_id' => [
-                'nullable',
-                'string',
-                Rule::exists('protected_areas', 'id')->where(fn ($q) => $q->where('municipio_id', $mid)),
-            ],
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
         ]);
@@ -136,7 +145,7 @@ final class IncidentCreate extends Component
         $enumCallType = CallType::from($validated['patient_call_type']);
 
         $dto = new CreateIncidentDTO(
-            municipioId: $mid,
+            municipioId: null,
             natureId: $validated['nature_id'],
             description: $validated['description'],
             addressLine: $validated['address_line'] ?: null,
@@ -154,30 +163,34 @@ final class IncidentCreate extends Component
             expectedVictimTotal: $validated['expected_victim_total'],
             createdByUserId: Auth::id(),
             patientName: $validated['patient_name'] ?: null,
-            protectedAreaId: ($validated['protected_area_id'] ?? '') !== ''
-                ? (int) $validated['protected_area_id']
-                : null,
+            protectedAreaId: null,
             isQta: $validated['is_qta'],
             totalDeathCount: $validated['total_death_count'],
             occurredAt: $occurred,
             callReceivedAt: $callReceived,
         );
 
-        $incident = $action->execute($dto);
+        try {
+            $incident = $action->execute($dto);
+        } catch (QueryException $e) {
+            report($e);
+            $this->addError('save', __('Não foi possível salvar (dados duplicados ou violação no banco). Verifique o talão ou tente novamente.'));
+
+            return;
+        } catch (Throwable $e) {
+            report($e);
+            $this->addError('save', __('Não foi possível salvar a ocorrência. Tente novamente ou contate o suporte.'));
+
+            return;
+        }
 
         $this->redirect(route('operations.incidents.show', $incident), navigate: true);
     }
 
     public function render(): View
     {
-        $mid = $this->municipioId();
-        $natures = Nature::query()->orderBy('name')->get();
-        $areas = ProtectedArea::query()->when($mid, fn ($q) => $q->where('municipio_id', $mid))->orderBy('name')->get();
-
         return view('livewire.operations.incident-create', [
-            'scopeMunicipioId' => $mid,
-            'natures' => $natures,
-            'protectedAreas' => $areas,
+            'natures' => Nature::query()->orderBy('name')->get(),
             'callTypes' => CallType::cases(),
         ]);
     }

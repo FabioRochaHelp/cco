@@ -10,7 +10,7 @@ use Carbon\CarbonInterface;
 final readonly class CreateIncidentDTO
 {
     public function __construct(
-        public int $municipioId,
+        public ?int $municipioId,
         public ?int $natureId,
         public string $description,
         public ?string $addressLine,

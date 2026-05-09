@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('incidents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('municipio_id')->constrained('municipios')->cascadeOnDelete();
+            $table->foreignId('municipio_id')->nullable()->constrained('municipios')->nullOnDelete();
             $table->unsignedInteger('dispatch_year');
             $table->unsignedInteger('talao');
             $table->string('status')->default(IncidentStatus::Open->value);
@@ -61,7 +61,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['municipio_id', 'dispatch_year', 'talao']);
+            /** Talão único por ano em todo o sistema (base definida só no empenho, quando aplicável). */
+            $table->unique(['dispatch_year', 'talao']);
             $table->index(['municipio_id', 'status', 'occurred_at']);
             $table->index(['status', 'occurred_at']);
             $table->index(['primary_shift_id']);

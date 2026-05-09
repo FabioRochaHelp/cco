@@ -20,6 +20,19 @@
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 
+                @can('viewAny', \App\Models\User::class)
+                    <flux:sidebar.group :heading="__('Administração')" class="grid">
+                        <flux:sidebar.item
+                            icon="users"
+                            :href="route('operations.admin.users')"
+                            :current="request()->routeIs('operations.admin.users')"
+                            wire:navigate
+                        >
+                            {{ __('Usuários') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endcan
+
                 <flux:sidebar.group :heading="__('Operações')" class="grid">
                     <flux:sidebar.item
                         icon="radio"

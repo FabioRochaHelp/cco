@@ -25,7 +25,7 @@ final class CreateOperationalIncidentAction
             $occurredAt = $dto->occurredAt ?? now();
             $callReceivedAt = $dto->callReceivedAt ?? $occurredAt;
 
-            $talao = $this->talaoIssuer->next($dto->municipioId, $occurredAt);
+            $talao = $this->talaoIssuer->next($occurredAt);
 
             $incident = Incident::create([
                 'municipio_id' => $dto->municipioId,
