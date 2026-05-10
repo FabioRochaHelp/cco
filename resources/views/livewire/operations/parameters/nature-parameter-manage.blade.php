@@ -39,8 +39,10 @@
                         <tr wire:key="nt-{{ $type->id }}">
                             <td class="px-4 py-3">{{ $type->name }}</td>
                             <td class="px-4 py-3 text-end">
-                                <flux:button size="sm" variant="ghost" wire:click="editNatureType({{ $type->id }})">{{ __('Editar') }}</flux:button>
-                                <flux:button size="sm" variant="ghost" wire:click="deleteNatureType({{ $type->id }})" wire:confirm="{{ __('Excluir este tipo?') }}">{{ __('Excluir') }}</flux:button>
+                                <div class="flex items-center justify-end gap-1">
+                                    <x-crud-icon-edit :item-id="$type->id" method="editNatureType" />
+                                    <x-crud-icon-delete :item-id="$type->id" method="deleteNatureType" :confirm-message="__('Excluir este tipo?')" />
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -84,8 +86,10 @@
                             <td class="px-4 py-3 font-medium">{{ $nature->name }}</td>
                             <td class="px-4 py-3 text-zinc-600">{{ $nature->natureType?->name ?? '—' }}</td>
                             <td class="px-4 py-3 text-end">
-                                <flux:button size="sm" variant="ghost" wire:click="editNature({{ $nature->id }})">{{ __('Editar') }}</flux:button>
-                                <flux:button size="sm" variant="ghost" wire:click="deleteNature({{ $nature->id }})" wire:confirm="{{ __('Excluir esta natureza?') }}">{{ __('Excluir') }}</flux:button>
+                                <div class="flex items-center justify-end gap-1">
+                                    <x-crud-icon-edit :item-id="$nature->id" method="editNature" />
+                                    <x-crud-icon-delete :item-id="$nature->id" method="deleteNature" :confirm-message="__('Excluir esta natureza?')" />
+                                </div>
                             </td>
                         </tr>
                     @empty

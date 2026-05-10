@@ -106,19 +106,17 @@
                                 @endif
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-end">
-                                @can('update', $u)
-                                    <flux:button size="sm" variant="ghost" wire:click="edit({{ $u->id }})">{{ __('Editar') }}</flux:button>
-                                @endcan
-                                @can('delete', $u)
-                                    <flux:button
-                                        size="sm"
-                                        variant="ghost"
-                                        wire:click="delete({{ $u->id }})"
-                                        wire:confirm="{{ __('Remover este usuário? Esta ação não pode ser desfeita.') }}"
-                                    >
-                                        {{ __('Excluir') }}
-                                    </flux:button>
-                                @endcan
+                                <div class="flex items-center justify-end gap-1">
+                                    @can('update', $u)
+                                        <x-crud-icon-edit :item-id="$u->id" />
+                                    @endcan
+                                    @can('delete', $u)
+                                        <x-crud-icon-delete
+                                            :item-id="$u->id"
+                                            :confirm-message="__('Remover este usuário? Esta ação não pode ser desfeita.')"
+                                        />
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @empty

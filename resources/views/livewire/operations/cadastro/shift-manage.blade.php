@@ -110,12 +110,14 @@
                                 {{ $shift->staff->pluck('name')->implode(', ') ?: '—' }}
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-end">
-                                @can('update', $shift)
-                                    <flux:button size="sm" variant="ghost" wire:click="edit({{ $shift->id }})">{{ __('Editar') }}</flux:button>
-                                @endcan
-                                @can('delete', $shift)
-                                    <flux:button size="sm" variant="ghost" wire:click="delete({{ $shift->id }})" wire:confirm="{{ __('Excluir este turno?') }}">{{ __('Excluir') }}</flux:button>
-                                @endcan
+                                <div class="flex items-center justify-end gap-1">
+                                    @can('update', $shift)
+                                        <x-crud-icon-edit :item-id="$shift->id" />
+                                    @endcan
+                                    @can('delete', $shift)
+                                        <x-crud-icon-delete :item-id="$shift->id" :confirm-message="__('Excluir este turno?')" />
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @empty

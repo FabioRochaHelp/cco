@@ -74,12 +74,14 @@
                             <td class="px-4 py-3 font-mono text-xs">{{ $s->cpf ?? '—' }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-600">{{ $s->phone ?? $s->email ?? '—' }}</td>
                             <td class="px-4 py-3 text-end">
-                                @can('update', $s)
-                                    <flux:button size="sm" variant="ghost" wire:click="edit({{ $s->id }})">{{ __('Editar') }}</flux:button>
-                                @endcan
-                                @can('delete', $s)
-                                    <flux:button size="sm" variant="ghost" wire:click="delete({{ $s->id }})" wire:confirm="{{ __('Excluir este registro?') }}">{{ __('Excluir') }}</flux:button>
-                                @endcan
+                                <div class="flex items-center justify-end gap-1">
+                                    @can('update', $s)
+                                        <x-crud-icon-edit :item-id="$s->id" />
+                                    @endcan
+                                    @can('delete', $s)
+                                        <x-crud-icon-delete :item-id="$s->id" :confirm-message="__('Excluir este registro?')" />
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @empty

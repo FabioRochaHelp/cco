@@ -37,8 +37,10 @@
                         <tr wire:key="row-{{ $item->id }}">
                             <td class="px-4 py-3">{{ $item->name }}</td>
                             <td class="px-4 py-3 text-end">
-                                <flux:button size="sm" variant="ghost" wire:click="edit({{ $item->id }})">{{ __('Editar') }}</flux:button>
-                                <flux:button size="sm" variant="ghost" wire:click="delete({{ $item->id }})" wire:confirm="{{ __('Excluir este registro?') }}">{{ __('Excluir') }}</flux:button>
+                                <div class="flex items-center justify-end gap-1">
+                                    <x-crud-icon-edit :item-id="$item->id" />
+                                    <x-crud-icon-delete :item-id="$item->id" :confirm-message="__('Excluir este registro?')" />
+                                </div>
                             </td>
                         </tr>
                     @empty

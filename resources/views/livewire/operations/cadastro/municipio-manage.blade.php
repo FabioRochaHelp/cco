@@ -61,12 +61,14 @@
                             <td class="px-4 py-3 font-mono text-xs">{{ $b->cnpj ?? '—' }}</td>
                             <td class="px-4 py-3">{{ $b->active ? __('Sim') : __('Não') }}</td>
                             <td class="px-4 py-3 text-end">
-                                @can('update', $b)
-                                    <flux:button size="sm" variant="ghost" wire:click="edit({{ $b->id }})">{{ __('Editar') }}</flux:button>
-                                @endcan
-                                @can('delete', $b)
-                                    <flux:button size="sm" variant="ghost" wire:click="delete({{ $b->id }})" wire:confirm="{{ __('Excluir esta base?') }}">{{ __('Excluir') }}</flux:button>
-                                @endcan
+                                <div class="flex items-center justify-end gap-1">
+                                    @can('update', $b)
+                                        <x-crud-icon-edit :item-id="$b->id" />
+                                    @endcan
+                                    @can('delete', $b)
+                                        <x-crud-icon-delete :item-id="$b->id" :confirm-message="__('Excluir esta base?')" />
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @empty

@@ -78,12 +78,14 @@
                             <td class="px-4 py-3 text-zinc-600">{{ trim(implode(' ', array_filter([$v->make, $v->model]))) ?: '—' }}</td>
                             <td class="px-4 py-3 font-mono text-xs text-zinc-500">{{ $v->device_id ?? '—' }}</td>
                             <td class="px-4 py-3 text-end">
-                                @can('update', $v)
-                                    <flux:button size="sm" variant="ghost" wire:click="edit({{ $v->id }})">{{ __('Editar') }}</flux:button>
-                                @endcan
-                                @can('delete', $v)
-                                    <flux:button size="sm" variant="ghost" wire:click="delete({{ $v->id }})" wire:confirm="{{ __('Excluir esta viatura?') }}">{{ __('Excluir') }}</flux:button>
-                                @endcan
+                                <div class="flex items-center justify-end gap-1">
+                                    @can('update', $v)
+                                        <x-crud-icon-edit :item-id="$v->id" />
+                                    @endcan
+                                    @can('delete', $v)
+                                        <x-crud-icon-delete :item-id="$v->id" :confirm-message="__('Excluir esta viatura?')" />
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @empty
