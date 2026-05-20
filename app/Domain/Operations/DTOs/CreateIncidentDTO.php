@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Operations\DTOs;
 
 use App\Domain\Operations\Enums\CallType;
+use App\Domain\Operations\Enums\ManchesterRisk;
 use Carbon\CarbonInterface;
 
 final readonly class CreateIncidentDTO
@@ -33,5 +34,6 @@ final readonly class CreateIncidentDTO
         public ?int $totalDeathCount = null,
         public ?CarbonInterface $occurredAt = null,
         public ?CarbonInterface $callReceivedAt = null,
+        public ?ManchesterRisk $manchesterRisk = null,
     ) {}
 }

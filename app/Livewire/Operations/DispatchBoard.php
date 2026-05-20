@@ -254,7 +254,7 @@ final class DispatchBoard extends Component
         $mid = OperationalMunicipioSelection::current(Auth::user());
 
         $openIncidentsQuery = Incident::query()
-            ->with('municipio')
+            ->with(['nature'])
             ->where('status', IncidentStatus::Open);
 
         OperationalIncidentVisibility::constrainListing($openIncidentsQuery, Auth::user());
@@ -262,7 +262,8 @@ final class DispatchBoard extends Component
         $openIncidents = $openIncidentsQuery->clone()->orderByDesc('occurred_at')->get();
 
         $availableShiftsQuery = Shift::query()
-            ->with(['vehicle', 'municipio'])
+            ->with(['vehicle', 'municipio', 'staff:id,name,cargo'])
+            ->withCount('staff')
             ->operationalAvailability()
             ->when($mid !== null, fn ($q) => $q->where('municipio_id', $mid));
 

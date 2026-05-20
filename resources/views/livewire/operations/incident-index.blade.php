@@ -60,7 +60,10 @@
                             <tr wire:key="inc-{{ $incident->id }}" class="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
                                 <td class="whitespace-nowrap px-4 py-3 font-semibold tabular-nums">{{ $incident->talao }}/{{ $incident->dispatch_year }}</td>
                                 <td class="px-4 py-3">
-                                    <flux:badge size="sm" :inset="true">{{ $incident->status->label() }}</flux:badge>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <x-incident.status-badge :status="$incident->status" />
+                                        <x-incident.manchester-badge :risk="$incident->manchester_risk" :showPrefix="false" />
+                                    </div>
                                 </td>
                                 <td class="whitespace-nowrap px-4 py-3 text-zinc-600 dark:text-zinc-400">{{ $incident->occurred_at->format('d/m/Y H:i') }}</td>
                                 <td class="max-w-[14rem] px-4 py-3 text-zinc-700 dark:text-zinc-300">

@@ -2,15 +2,6 @@
     use App\Domain\Operations\Enums\IncidentStatus;
     use App\Models\Prescription;
     use App\Support\Operations\TimelineEventLabels;
-
-    $statusBadgeColor = match ($incident->status) {
-        IncidentStatus::Open => 'blue',
-        IncidentStatus::Dispatched, IncidentStatus::InProgress => 'cyan',
-        IncidentStatus::PendingNurseReport => 'amber',
-        IncidentStatus::Closed => 'zinc',
-        IncidentStatus::Qta => 'orange',
-        IncidentStatus::Cancelled => 'red',
-    };
 @endphp
 
 <div class="cco-page-gap" wire:poll.30s="refreshOperationalState">
@@ -26,7 +17,10 @@
             </flux:heading>
             <flux:text class="mt-1">{{ $incident->occurred_at->format('d/m/Y H:i:s') }}</flux:text>
         </div>
-        <flux:badge color="{{ $statusBadgeColor }}" size="lg">{{ $incident->status->label() }}</flux:badge>
+        <div class="flex flex-wrap items-center justify-end gap-2">
+            <x-incident.status-badge :status="$incident->status" size="lg" />
+            <x-incident.manchester-badge :risk="$incident->manchester_risk" size="lg" />
+        </div>
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">

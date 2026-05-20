@@ -36,6 +36,7 @@ class Incident extends Model
         'patient_sex',
         'patient_name',
         'patient_call_type',
+        'manchester_risk',
         'is_qta',
         'expected_victim_total',
         'total_death_count',
@@ -56,6 +57,7 @@ class Incident extends Model
     {
         return [
             'status' => IncidentStatus::class,
+            'manchester_risk' => \App\Domain\Operations\Enums\ManchesterRisk::class,
             'occurred_at' => 'datetime',
             'call_received_at' => 'datetime',
             'dispatched_at' => 'datetime',

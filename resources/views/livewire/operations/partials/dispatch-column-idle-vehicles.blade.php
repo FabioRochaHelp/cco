@@ -1,19 +1,24 @@
-<flux:card class="flex max-h-[min(72vh,44rem)] flex-col gap-3 shadow-sm lg:sticky lg:top-24">
-    <div>
-        <flux:subheading>{{ __('Viaturas sem turno') }}</flux:subheading>
+<flux:card class="flex max-h-[min(64vh,38rem)] flex-col gap-3 !p-3 shadow-sm">
+    <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+            <flux:icon.truck class="size-4 text-cyan-700 dark:text-cyan-300" />
+            <flux:subheading>{{ __('Viaturas') }}</flux:subheading>
+        </div>
+        <flux:badge size="sm" color="zinc" inset>{{ __('Sem turno') }}</flux:badge>
     </div>
 
     <div class="min-h-0 flex-1 space-y-2 overflow-y-auto pe-1">
         @forelse ($vehiclesWithoutShift as $vehicle)
             <div
                 wire:key="idle-vehicle-{{ $vehicle->id }}"
-                class="rounded-xl border border-slate-200/90 bg-white/90 px-3 py-3 dark:border-slate-700/60 dark:bg-slate-900/35"
+                class="rounded-xl border border-slate-200/90 bg-white/90 px-2.5 py-2.5 text-sm dark:border-slate-700/60 dark:bg-slate-900/35"
             >
                 <div class="flex items-center justify-between gap-2">
-                    <span class="font-semibold text-slate-900 dark:text-slate-50">{{ $vehicle->prefix ?? __('Sem prefixo') }}</span>
-                    <flux:badge size="sm" color="zinc" inset>{{ __('Sem turno') }}</flux:badge>
+                    <div class="flex min-w-0 items-center gap-2">
+                        <flux:icon.exclamation-triangle class="size-4 text-amber-600 dark:text-amber-400" />
+                        <span class="truncate font-semibold text-slate-900 dark:text-slate-50">{{ $vehicle->prefix ?? __('Sem prefixo') }}</span>
+                    </div>
                 </div>
-                <span class="font-mono text-sm text-slate-600 dark:text-slate-400">{{ $vehicle->plate ?? '—' }}</span>
                 <span class="mt-1 block text-xs text-slate-500">{{ $vehicle->municipio?->razao_social ?? ('#'.$vehicle->municipio_id) }}</span>
             </div>
         @empty

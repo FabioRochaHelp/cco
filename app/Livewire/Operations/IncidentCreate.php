@@ -7,6 +7,7 @@ namespace App\Livewire\Operations;
 use App\Domain\Operations\Actions\CreateOperationalIncidentAction;
 use App\Domain\Operations\DTOs\CreateIncidentDTO;
 use App\Domain\Operations\Enums\CallType;
+use App\Domain\Operations\Enums\ManchesterRisk;
 use App\Models\Incident;
 use App\Models\Nature;
 use App\Support\Operations\IncidentPhoneNormalizer;
@@ -62,6 +63,8 @@ final class IncidentCreate extends Component
 
     /** Preenchido apenas ao clicar num botão de tipo de chamada (persistência). */
     public string $patient_call_type = 'N';
+
+    public ?string $manchester_risk = null;
 
     public ?int $expected_victim_total = null;
 
@@ -371,6 +374,7 @@ final class IncidentCreate extends Component
             'patient_age' => ['nullable', 'integer', 'min:0', 'max:130'],
             'patient_sex' => ['nullable', 'string', 'max:16'],
             'patient_call_type' => ['required', Rule::enum(CallType::class)],
+            'manchester_risk' => ['nullable', Rule::enum(ManchesterRisk::class)],
             'expected_victim_total' => ['nullable', 'integer', 'min:0', 'max:999'],
             'is_qta' => ['boolean'],
             'total_death_count' => ['nullable', 'integer', 'min:0', 'max:999'],
@@ -381,6 +385,9 @@ final class IncidentCreate extends Component
         $occurred = CarbonImmutable::parse($validated['occurred_at']);
 
         $enumCallType = CallType::from($validated['patient_call_type']);
+        $enumManchester = isset($validated['manchester_risk']) && $validated['manchester_risk'] !== null && $validated['manchester_risk'] !== ''
+            ? ManchesterRisk::from($validated['manchester_risk'])
+            : null;
 
         $dto = new CreateIncidentDTO(
             municipioId: null,
@@ -406,6 +413,7 @@ final class IncidentCreate extends Component
             totalDeathCount: $validated['total_death_count'],
             occurredAt: $occurred,
             callReceivedAt: $occurred,
+            manchesterRisk: $enumManchester,
         );
 
         try {

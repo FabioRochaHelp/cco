@@ -109,7 +109,25 @@
             </div>
 
             <div class="border-t border-slate-200/90 pt-6 dark:border-slate-700/60">
-               
+                <div class="grid gap-4 lg:grid-cols-2">
+                    <flux:select
+                        wire:model="manchester_risk"
+                        :label="__('Classificação de risco (Manchester)')"
+                        placeholder="{{ __('Opcional') }}"
+                        class="lg:col-span-2"
+                    >
+                        <flux:select.option value="">{{ __('Não definido') }}</flux:select.option>
+                        <flux:select.option value="red">{{ __('Vermelho') }} — {{ __('Imediato') }}</flux:select.option>
+                        <flux:select.option value="orange">{{ __('Laranja') }} — {{ __('Muito urgente') }}</flux:select.option>
+                        <flux:select.option value="yellow">{{ __('Amarelo') }} — {{ __('Urgente') }}</flux:select.option>
+                        <flux:select.option value="green">{{ __('Verde') }} — {{ __('Pouco urgente') }}</flux:select.option>
+                        <flux:select.option value="blue">{{ __('Azul') }} — {{ __('Não urgente') }}</flux:select.option>
+                    </flux:select>
+
+                    <flux:text size="sm" class="text-zinc-500 lg:col-span-2">
+                        {{ __('Use Manchester para indicar a prioridade clínica (independente do status operacional e do tipo de chamada).') }}
+                    </flux:text>
+                </div>
             </div>
 
             <div class="border-t border-slate-200/95 pt-6 dark:border-slate-700/60">

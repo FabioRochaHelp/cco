@@ -1,8 +1,9 @@
 DC := docker compose
+NODE_USER := $(shell id -u):$(shell id -g)
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build up down restart logs ps shell composer-install artisan migrate migrate-fresh seed key test lint lint-fix npm-install npm-build npm-install-docker npm-build-docker npm-dev setup clean
+.PHONY: help build up down restart logs ps shell composer-install artisan migrate migrate-fresh seed key test lint lint-fix npm-install npm-build npm-clean-build npm-install-docker npm-build-docker npm-dev setup clean
 
 help: ## Mostra os alvos disponíveis
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -60,13 +61,18 @@ npm-install: ## npm ci no host
 	npm ci
 
 npm-build: ## npm run build no host
+	$(MAKE) npm-clean-build
 	npm run build
 
+npm-clean-build: ## Remove public/build (evita EACCES por arquivos do Docker)
+	$(DC) run --rm node sh -lc 'rm -rf public/build'
+
 npm-install-docker: ## npm ci no container node (imagem PHP não inclui Node)
-	$(DC) run --rm node npm ci
+	$(DC) run --rm --user $(NODE_USER) node npm ci
 
 npm-build-docker: ## npm run build no container node
-	$(DC) run --rm node npm run build
+	$(MAKE) npm-clean-build
+	$(DC) run --rm --user $(NODE_USER) node npm run build
 
 npm-dev: ## npm run dev no host (Vite)
 	npm run dev

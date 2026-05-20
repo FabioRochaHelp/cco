@@ -106,10 +106,10 @@ select:focus[data-flux-control] {
 .cco-shell {
     min-height: 100vh;
     color: rgb(51 65 85); /* slate-700 */
-    background-color: #f8fafc;
+    background-color: #f1f5f9;
     background-image:
-        radial-gradient(ellipse 120% 80% at 50% -30%, rgba(8, 145, 178, 0.08), transparent 55%),
-        radial-gradient(ellipse 70% 55% at 100% 0%, rgba(14, 165, 233, 0.05), transparent 45%);
+        radial-gradient(ellipse 120% 80% at 50% -30%, rgba(8, 145, 178, 0.07), transparent 55%),
+        radial-gradient(ellipse 70% 55% at 100% 0%, rgba(14, 165, 233, 0.045), transparent 45%);
     background-attachment: fixed;
 }
 
@@ -132,11 +132,11 @@ select:focus[data-flux-control] {
         margin: 0.65rem 0.65rem 0.65rem 0;
         min-height: calc(100vh - 1.3rem);
         border-radius: 1rem;
-        border: 1px solid rgb(226 232 240 / 0.95);
-        background: linear-gradient(165deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.85) 100%);
+        border: 1px solid rgb(203 213 225 / 0.9);
+        background: linear-gradient(165deg, rgba(255, 255, 255, 0.94) 0%, rgba(241, 245, 249, 0.88) 100%);
         box-shadow:
             0 1px 0 rgb(255 255 255 / 0.7) inset,
-            0 18px 40px -20px rgb(15 23 42 / 0.12);
+            0 22px 55px -30px rgb(15 23 42 / 0.16);
         backdrop-filter: blur(10px);
     }
 
@@ -187,11 +187,23 @@ select:focus[data-flux-control] {
 
 /* Cards Flux */
 [data-flux-card] {
-    border-color: rgb(226 232 240 / 0.95) !important;
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.88) 100%) !important;
+    position: relative;
+    border-color: rgb(203 213 225 / 0.9) !important;
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.92) 100%) !important;
     box-shadow:
         0 1px 0 rgb(255 255 255 / 0.9) inset,
-        0 12px 28px -18px rgb(15 23 42 / 0.08);
+        0 16px 36px -26px rgb(15 23 42 / 0.12);
+}
+
+/* Linha de “header” sutil para separar do fundo no tema claro */
+:root:not(.dark) .cco-main [data-flux-card]::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(8, 145, 178, 0.18), rgba(14, 165, 233, 0.34), rgba(8, 145, 178, 0.16));
+    opacity: 0.9;
+    pointer-events: none;
 }
 
 .dark [data-flux-card] {
@@ -270,9 +282,27 @@ select:focus[data-flux-control] {
     @apply flex flex-col gap-8 p-4 lg:p-8;
 }
 
+/* Superfícies por seção (evita tela “chapada”) */
+.cco-surface {
+    @apply rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm shadow-slate-900/5 backdrop-blur-sm;
+    @apply dark:border-slate-700/55 dark:bg-slate-950/30 dark:shadow-black/20;
+}
+
+.cco-surface-header {
+    @apply mb-4 flex flex-wrap items-center justify-between gap-3;
+}
+
+.cco-surface-title {
+    @apply flex items-center gap-2 text-sm font-semibold tracking-tight text-slate-800 dark:text-slate-100;
+}
+
+.cco-surface-subtitle {
+    @apply text-xs text-slate-500 dark:text-slate-400;
+}
+
 /* Tabela operacional */
 .cco-table-shell {
-    @apply overflow-x-auto rounded-xl border border-slate-200/90 bg-white/70 shadow-inner shadow-slate-900/5 dark:border-slate-700/55 dark:bg-slate-950/35 dark:shadow-black/20;
+    @apply overflow-x-auto rounded-xl border border-slate-300/70 bg-white/85 shadow-sm shadow-slate-900/5 dark:border-slate-700/55 dark:bg-slate-950/35 dark:shadow-black/20;
 }
 
 .cco-table-shell table thead {
@@ -296,8 +326,25 @@ select:focus[data-flux-control] {
     border-top-color: rgb(8 145 178 / 0.65) !important;
 }
 
+/* Kanban precisa ser mais “flat” para não parecer sobreposto às seções abaixo */
+:root:not(.dark) .cco-kanban-column[data-flux-card] {
+    box-shadow:
+        0 1px 0 rgb(255 255 255 / 0.8) inset,
+        0 10px 22px -20px rgb(15 23 42 / 0.12) !important;
+}
+
+:root:not(.dark) .cco-kanban-column[data-flux-card]::before {
+    opacity: 0;
+}
+
 .dark .cco-kanban-column {
     border-top-color: rgba(34, 211, 238, 0.55) !important;
+}
+
+.dark .cco-kanban-column[data-flux-card] {
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 14px 26px -22px rgba(0, 0, 0, 0.55) !important;
 }
 
 .cco-kanban-card {

@@ -24,6 +24,11 @@
                                     <flux:badge size="sm" color="zinc">{{ $dispatch->shift->vehicle->prefix }}</flux:badge>
                                 @endif
                             </div>
+                            @if ($dispatch->incident?->manchester_risk)
+                                <div class="mt-2">
+                                    <x-incident.manchester-badge :risk="$dispatch->incident->manchester_risk" size="sm" :showPrefix="false" />
+                                </div>
+                            @endif
                             @if ($dispatch->shift?->vehicle?->plate)
                                 <flux:text size="sm" class="text-slate-600 dark:text-slate-500">{{ $dispatch->shift->vehicle->plate }}</flux:text>
                             @endif

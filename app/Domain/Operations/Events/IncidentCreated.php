@@ -46,6 +46,7 @@ final class IncidentCreated implements ShouldBroadcast, ShouldDispatchAfterCommi
             'talao' => $this->incident->talao,
             'dispatch_year' => $this->incident->dispatch_year,
             'status' => $this->incident->status->value,
+            'manchester_risk' => $this->incident->manchester_risk?->value,
         ];
     }
 }

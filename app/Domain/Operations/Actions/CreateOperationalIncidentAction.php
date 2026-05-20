@@ -47,6 +47,7 @@ final class CreateOperationalIncidentAction
                 'patient_sex' => $dto->patientSex,
                 'patient_name' => $dto->patientName,
                 'patient_call_type' => $dto->callType->value,
+                'manchester_risk' => $dto->manchesterRisk?->value,
                 'latitude' => $dto->latitude,
                 'longitude' => $dto->longitude,
                 'expected_victim_total' => $dto->expectedVictimTotal,
@@ -59,6 +60,7 @@ final class CreateOperationalIncidentAction
             $this->timeline->record($incident, 'incident_created', [
                 'talao' => $talao,
                 'call_type' => $dto->callType->value,
+                'manchester_risk' => $dto->manchesterRisk?->value,
             ]);
 
             IncidentCreated::dispatch($incident);
