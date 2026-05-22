@@ -3,6 +3,12 @@
 **Data:** 2026-05-22
 **Referência:** `docs/migracao/`
 
+> **Escopo confirmado:** Sistema **multi-modalidade** — atende ocorrências de Incêndio
+> (Florestal, Residencial, Comercial), Salvamento (Animal, Insetos agressivos, Outras) **e SAMU**.
+> O código SAMU já implementado (vítimas, sinais vitais, prescrição, nurse report, Manchester)
+> deve ser mantido. Os relatórios finais de Incêndio e Salvamento ainda precisam ser criados.
+> Ver `docs/migracao/modalidades-relatorios.md` para o mapeamento completo.
+
 ---
 
 ## O que está implementado
@@ -118,10 +124,10 @@
 
 ### 7. `CloseIncidentAction` explícita (ausente)
 
-- `ReleaseUnitAction` transiciona para `pending_nurse_report`
-- Após `IncidentNurseReport` ser salvo, **não há action para fechar** a ocorrência (`Closed`)
+- `ReleaseUnitAction` transiciona para `pending_nurse_report` (renomear para `pending_final_report`)
+- Após o relatório final ser preenchido, **não há action para fechar** a ocorrência (`Closed`)
 - Status `Closed` existe no enum mas nenhum fluxo o alcança
-- Referência: `docs/migracao/plano-migracao-laravel.md` § Actions
+- Referência: `docs/migracao/plano-migracao-laravel.md` § Actions e `docs/migracao/modalidades-relatorios.md`
 
 ### 8. `CancelIncidentAction` (ausente)
 
@@ -147,6 +153,22 @@
 - O plano recomenda Horizon para monitorar filas
 - Apenas `config/reverb.php` existe; sem `config/horizon.php`
 
+### 14. Relatórios finais por modalidade CB (ausente por completo)
+
+- Nenhuma das tabelas de relatório final CB foi criada (`fire_forest_reports`, `fire_building_reports`, `rescue_animal_reports`, `rescue_insect_reports`, `rescue_other_reports`)
+- Sem tabela base `incident_final_reports`
+- Nenhum Livewire component para preenchimento do relatório por modalidade
+- Sem `SaveFinalReportAction`, `FinalReportFilled` event, `CloseIncidentAction`
+- Sem coluna `report_modality` em `natures`
+- O sistema SAMU já tem seu relatório final (`IncidentNurseReport`) — a arquitetura CB deve ser análoga
+- Referência: `docs/migracao/modalidades-relatorios.md`
+
+### 15. Kanban sem controle de modalidade (pendente)
+
+- As colunas de hospital (`arrived_hospital`, `released_hospital`) aparecem para todas as ocorrências
+- Para incêndios puros essas etapas não se aplicam — o Kanban deve ocultá-las com base no `report_modality` da natureza
+- Referência: `docs/migracao/modalidades-relatorios.md` § Etapas de despacho por modalidade
+
 ### 13. Listagem de Ligações (ausente)
 
 - Tabela `ligacoes` existe na migration
@@ -163,7 +185,7 @@
 | Actions do ciclo operacional | Completo |
 | Models e migrations principais | Completo |
 | Telas CCO / Kanban | Completo |
-| Vítimas, sinais, prescrição (formulário) | Completo |
+| Vítimas, sinais, prescrição (formulário SAMU) | Completo |
 | Autorização e policies | Completo |
 | Mapas Leaflet + OSM | Completo |
 | Cache locks (anti duplo despacho) | Completo |
@@ -173,7 +195,7 @@
 | Outbox transacional | Ausente |
 | Audit log | Ausente |
 | PDF / Impressão de ocorrência | Ausente |
-| `CloseIncidentAction` (pós-enfermagem) | Ausente |
+| `CloseIncidentAction` (pós-relatório final CB ou nurse report SAMU) | Ausente |
 | `CancelIncidentAction` | Ausente |
 | Transporte agendado (UI) | Ausente |
 | FleetCheckup (UI) | Ausente |
