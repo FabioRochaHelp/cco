@@ -63,6 +63,11 @@
                     <flux:select.option value="{{ $type->id }}">{{ $type->name }}</flux:select.option>
                 @endforeach
             </flux:select>
+            <flux:select wire:model="natureFormReportModality" :label="__('Modalidade de relatório')" placeholder="{{ __('— Nenhuma —') }}">
+                @foreach ($reportModalities as $m)
+                    <flux:select.option value="{{ $m->value }}">{{ $m->label() }}</flux:select.option>
+                @endforeach
+            </flux:select>
             <div class="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-3">
                 <flux:button type="submit" variant="primary">{{ $editingNatureId ? __('Salvar natureza') : __('Incluir natureza') }}</flux:button>
                 @if ($editingNatureId)
@@ -77,6 +82,7 @@
                     <tr>
                         <th class="px-4 py-3 font-medium">{{ __('Nome') }}</th>
                         <th class="px-4 py-3 font-medium">{{ __('Tipo') }}</th>
+                        <th class="px-4 py-3 font-medium">{{ __('Modalidade') }}</th>
                         <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
@@ -85,6 +91,7 @@
                         <tr wire:key="n-{{ $nature->id }}">
                             <td class="px-4 py-3 font-medium">{{ $nature->name }}</td>
                             <td class="px-4 py-3 text-zinc-600">{{ $nature->natureType?->name ?? '—' }}</td>
+                            <td class="px-4 py-3 text-zinc-600">{{ $nature->report_modality?->label() ?? '—' }}</td>
                             <td class="px-4 py-3 text-end">
                                 <div class="flex items-center justify-end gap-1">
                                     <x-crud-icon-edit :item-id="$nature->id" method="editNature" />
@@ -93,7 +100,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="3" class="px-4 py-6 text-zinc-500">{{ __('Nenhuma natureza.') }}</td></tr>
+                        <tr><td colspan="4" class="px-4 py-6 text-zinc-500">{{ __('Nenhuma natureza.') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>

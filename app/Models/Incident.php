@@ -122,6 +122,11 @@ class Incident extends Model
         return $this->hasOne(IncidentNurseReport::class);
     }
 
+    public function finalReport(): HasOne
+    {
+        return $this->hasOne(IncidentFinalReport::class);
+    }
+
     public function activeDispatch(): ?IncidentDispatch
     {
         return $this->dispatches()->whereNull('deleted_at')->orderByDesc('id')->first();

@@ -2,6 +2,7 @@
     use App\Domain\Operations\Enums\IncidentStatus;
     use App\Models\Prescription;
     use App\Support\Operations\TimelineEventLabels;
+    $modality = $incident->nature?->report_modality;
 @endphp
 
 <div class="cco-page-gap" wire:poll.30s="refreshOperationalState">
@@ -161,6 +162,45 @@
                 <div class="mt-4">
                     <flux:button variant="primary" size="sm" icon="document-plus" :href="route('operations.incidents.nurse-report', $incident)" wire:navigate>
                         {{ __('Preencher relatório') }}
+                    </flux:button>
+                </div>
+            @endif
+        </flux:card>
+    @endcan
+
+    @can('fillFinalReport', $incident)
+        <flux:card class="border-s-4 border-s-orange-500 dark:border-s-orange-400">
+            <flux:subheading>
+                {{ __('Relatório final') }}
+                @if ($modality)
+                    <flux:badge size="sm" color="orange" class="ms-2">{{ $modality->label() }}</flux:badge>
+                @endif
+            </flux:subheading>
+            @if ($incident->finalReport)
+                <flux:text size="sm" class="mt-2 text-zinc-600 dark:text-zinc-400">
+                    {{ __('Registrado por :nome em :data.', [
+                        'nome' => $incident->finalReport->filledBy?->name ?? '—',
+                        'data' => $incident->finalReport->submitted_at?->format('d/m/Y H:i') ?? '—',
+                    ]) }}
+                </flux:text>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <flux:button variant="ghost" size="sm" icon="document-text" :href="route('operations.incidents.final-report', $incident)" wire:navigate>
+                        {{ __('Editar relatório final') }}
+                    </flux:button>
+                </div>
+            @else
+                @if ($incident->status === IncidentStatus::PendingFinalReport)
+                    <flux:callout variant="warning" class="mt-3">
+                        {{ __('A viatura foi liberada. A ocorrência permanece pendente até o preenchimento do relatório final.') }}
+                    </flux:callout>
+                @else
+                    <flux:callout variant="warning" class="mt-3">
+                        {{ __('Preencha o relatório final desta ocorrência.') }}
+                    </flux:callout>
+                @endif
+                <div class="mt-4">
+                    <flux:button variant="primary" size="sm" icon="document-plus" :href="route('operations.incidents.final-report', $incident)" wire:navigate>
+                        {{ __('Preencher relatório final') }}
                     </flux:button>
                 </div>
             @endif

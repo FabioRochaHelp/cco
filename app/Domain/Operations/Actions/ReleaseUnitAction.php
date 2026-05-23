@@ -6,6 +6,7 @@ namespace App\Domain\Operations\Actions;
 
 use App\Domain\Operations\DTOs\ReleaseUnitDTO;
 use App\Domain\Operations\Enums\DispatchStage;
+use App\Domain\Operations\Enums\IncidentReportModality;
 use App\Domain\Operations\Enums\IncidentStatus;
 use App\Domain\Operations\Enums\ShiftStatus;
 use App\Domain\Operations\Events\UnitReleased;
@@ -30,7 +31,7 @@ final class ReleaseUnitAction
         $lock->block(10, function () use ($dto): void {
             DB::transaction(function () use ($dto): void {
                 /** @var Incident $incident */
-                $incident = Incident::query()->findOrFail($dto->incidentId);
+                $incident = Incident::query()->with('nature')->findOrFail($dto->incidentId);
 
                 /** @var Shift|null $shift */
                 $shift = Shift::query()
@@ -55,8 +56,14 @@ final class ReleaseUnitAction
                     throw new RuntimeException('Despacho ativo não encontrado.');
                 }
 
-                if ($dispatch->stage !== DispatchStage::ReleasedHospital) {
-                    throw new RuntimeException('Encerramento só é permitido após etapa "liberada da US".');
+                $modality = $incident->nature?->report_modality;
+                $closesAtLeftScene = $modality instanceof IncidentReportModality && $modality->closesAtLeftScene();
+
+                $requiredStage = $closesAtLeftScene ? DispatchStage::LeftScene : DispatchStage::ReleasedHospital;
+
+                if ($dispatch->stage !== $requiredStage) {
+                    $label = $requiredStage->label();
+                    throw new RuntimeException("Encerramento só é permitido após etapa \"{$label}\".");
                 }
 
                 $now = now();
@@ -65,8 +72,12 @@ final class ReleaseUnitAction
 
                 $shift->update(['status' => ShiftStatus::Available, 'status_legacy' => 1]);
 
+                $pendingStatus = $modality?->usesFinalReport()
+                    ? IncidentStatus::PendingFinalReport
+                    : IncidentStatus::PendingNurseReport;
+
                 $incident->update([
-                    'status' => IncidentStatus::PendingNurseReport,
+                    'status' => $pendingStatus,
                     'returned_base_at' => $now,
                     'primary_shift_id' => null,
                 ]);

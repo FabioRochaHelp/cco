@@ -14,6 +14,7 @@ use App\Domain\Operations\DTOs\DispatchUnitDTO;
 use App\Domain\Operations\DTOs\ReleaseUnitDTO;
 use App\Domain\Operations\Enums\CallType;
 use App\Domain\Operations\Enums\DispatchStage;
+use App\Domain\Operations\Enums\IncidentReportModality;
 use App\Domain\Operations\Enums\IncidentStatus;
 use App\Models\Incident;
 use App\Models\IncidentDispatch;
@@ -281,12 +282,22 @@ final class DispatchBoard extends Component
         $vehiclesWithoutShift = $vehiclesWithoutShiftQuery->orderBy('prefix')->limit(120)->get();
 
         $kanbanDispatches = IncidentDispatch::query()
-            ->with(['incident', 'shift.vehicle'])
+            ->with(['incident.nature', 'shift.vehicle'])
             ->whereNull('deleted_at')
             ->when($mid !== null, fn ($q) => $q->where('municipio_id', $mid))
             ->orderBy('id')
             ->get()
             ->groupBy(fn (IncidentDispatch $d) => $d->stage->value);
+
+        $dispatchFireMeta = $kanbanDispatches->flatten()->mapWithKeys(function (IncidentDispatch $d): array {
+            $modality = $d->incident?->nature?->report_modality;
+            $closesAtLeftScene = $modality instanceof IncidentReportModality && $modality->closesAtLeftScene();
+
+            return [$d->id => [
+                'closesAtLeftScene' => $closesAtLeftScene,
+                'releaseStage' => $closesAtLeftScene ? DispatchStage::LeftScene : DispatchStage::ReleasedHospital,
+            ]];
+        });
 
         $recentTimeline = IncidentEvent::query()
             ->with(['incident', 'actor'])
@@ -329,6 +340,7 @@ final class DispatchBoard extends Component
             'modalIncident' => $modalIncident,
             'modalShifts' => $modalShifts,
             'kanbanDispatches' => $kanbanDispatches,
+            'dispatchFireMeta' => $dispatchFireMeta,
             'orderedStages' => DispatchStage::ordered(),
             'recentTimeline' => $recentTimeline,
             'stats' => $stats,

@@ -12,6 +12,7 @@ use App\Livewire\Operations\FleetShifts;
 use App\Livewire\Operations\IncidentCallStart;
 use App\Livewire\Operations\IncidentCreate;
 use App\Livewire\Operations\IncidentIndex;
+use App\Livewire\Operations\IncidentFinalReport;
 use App\Livewire\Operations\IncidentNurseReport;
 use App\Livewire\Operations\IncidentOperationalDetail;
 use App\Livewire\Operations\Parameters\AccessoryParameterManage;
@@ -91,6 +92,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/victims/{victim}/prescriptions/create', PrescriptionForm::class)->name('operations.victims.prescriptions.create');
             Route::get('/prescriptions/{prescription}/approval', PrescriptionApproval::class)->name('operations.prescriptions.approval');
             Route::get('/incidents/{incident}/nurse-report', IncidentNurseReport::class)->name('operations.incidents.nurse-report');
+            Route::get('/incidents/{incident}/final-report', IncidentFinalReport::class)->name('operations.incidents.final-report');
             Route::get('/incidents/{incident}', IncidentOperationalDetail::class)->name('operations.incidents.show');
             Route::get('/fleet', FleetShifts::class)->name('operations.fleet');
         });

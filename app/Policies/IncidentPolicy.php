@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Domain\Operations\Enums\IncidentStatus;
+use App\Domain\Operations\Enums\IncidentReportModality;
 use App\Models\Incident;
 use App\Models\User;
 
@@ -103,6 +104,25 @@ final class IncidentPolicy
         }
 
         if (! in_array($incident->status, [IncidentStatus::PendingNurseReport, IncidentStatus::Closed], true)) {
+            return false;
+        }
+
+        return $this->viewOperational($user, $incident);
+    }
+
+    /** Relatório final CB — Incêndio/Salvamento: liberado em pendência ou edição após encerrada. */
+    public function fillFinalReport(User $user, Incident $incident): bool
+    {
+        if (! $user->hasOperationalAbility('incident.nurse_report')) {
+            return false;
+        }
+
+        if (! in_array($incident->status, [IncidentStatus::PendingFinalReport, IncidentStatus::Closed], true)) {
+            return false;
+        }
+
+        $modality = $incident->nature?->report_modality;
+        if (! ($modality instanceof IncidentReportModality) || ! $modality->usesFinalReport()) {
             return false;
         }
 

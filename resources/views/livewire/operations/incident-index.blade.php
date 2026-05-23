@@ -21,7 +21,8 @@
             @foreach ([
                 ['key' => 'open', 'label' => __('Abertas'), 'count' => $counts['open']],
                 ['key' => 'field', 'label' => __('Em campo'), 'count' => $counts['field']],
-                ['key' => 'pending_nurse', 'label' => __('Pendente relatório'), 'count' => $counts['pending_nurse']],
+                ['key' => 'pending_nurse', 'label' => __('Pend. enfermagem'), 'count' => $counts['pending_nurse']],
+                ['key' => 'pending_final', 'label' => __('Pend. relatório CB'), 'count' => $counts['pending_final']],
                 ['key' => 'qta', 'label' => __('QTA'), 'count' => $counts['qta']],
                 ['key' => 'closed', 'label' => __('Encerradas'), 'count' => $counts['closed']],
                 ['key' => 'cancelled', 'label' => __('Canceladas'), 'count' => $counts['cancelled']],

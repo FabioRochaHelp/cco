@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Operations\Parameters;
 
+use App\Domain\Operations\Enums\IncidentReportModality;
 use App\Models\Nature;
 use App\Models\NatureType;
 use Illuminate\Contracts\View\View;
@@ -25,6 +26,8 @@ final class NatureParameterManage extends Component
     public string $natureFormName = '';
 
     public ?int $natureFormNatureTypeId = null;
+
+    public string $natureFormReportModality = '';
 
     public ?int $editingNatureId = null;
 
@@ -92,6 +95,7 @@ final class NatureParameterManage extends Component
     {
         $this->natureFormName = '';
         $this->natureFormNatureTypeId = null;
+        $this->natureFormReportModality = '';
         $this->editingNatureId = null;
     }
 
@@ -102,11 +106,13 @@ final class NatureParameterManage extends Component
         $this->editingNatureId = $nature->id;
         $this->natureFormName = $nature->name;
         $this->natureFormNatureTypeId = $nature->nature_type_id;
+        $this->natureFormReportModality = $nature->report_modality?->value ?? '';
     }
 
     public function saveNature(): void
     {
         $this->resetErrorBag();
+        $modalityValues = collect(IncidentReportModality::cases())->pluck('value')->implode(',');
         $validated = $this->validate([
             'natureFormName' => [
                 'required',
@@ -116,19 +122,24 @@ final class NatureParameterManage extends Component
                     ->where(fn ($q) => $q->where('nature_type_id', $this->natureFormNatureTypeId))
                     ->ignore($this->editingNatureId),
             ],
-            'natureFormNatureTypeId' => ['required', 'integer', 'exists:nature_types,id'],
+            'natureFormNatureTypeId'     => ['required', 'integer', 'exists:nature_types,id'],
+            'natureFormReportModality'   => ['nullable', 'string', "in:{$modalityValues}"],
         ]);
+
+        $modality = $validated['natureFormReportModality'] ?: null;
 
         if ($this->editingNatureId !== null) {
             Nature::query()->whereKey($this->editingNatureId)->update([
-                'name' => $validated['natureFormName'],
-                'nature_type_id' => $validated['natureFormNatureTypeId'],
+                'name'            => $validated['natureFormName'],
+                'nature_type_id'  => $validated['natureFormNatureTypeId'],
+                'report_modality' => $modality,
             ]);
             $this->message = __('Natureza atualizada.');
         } else {
             Nature::query()->create([
-                'nature_type_id' => $validated['natureFormNatureTypeId'],
-                'name' => $validated['natureFormName'],
+                'nature_type_id'  => $validated['natureFormNatureTypeId'],
+                'name'            => $validated['natureFormName'],
+                'report_modality' => $modality,
             ]);
             $this->message = __('Natureza criada.');
         }
@@ -149,8 +160,9 @@ final class NatureParameterManage extends Component
     public function render(): View
     {
         return view('livewire.operations.parameters.nature-parameter-manage', [
-            'natureTypes' => NatureType::query()->orderBy('name')->get(),
-            'natures' => Nature::query()->with('natureType')->orderBy('name')->get(),
+            'natureTypes'      => NatureType::query()->orderBy('name')->get(),
+            'natures'          => Nature::query()->with('natureType')->orderBy('name')->get(),
+            'reportModalities' => IncidentReportModality::cases(),
         ]);
     }
 }

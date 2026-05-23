@@ -23,7 +23,7 @@ final class IncidentIndex extends Component
 {
     use WithPagination;
 
-    /** @var 'open'|'field'|'pending_nurse'|'qta'|'closed'|'cancelled'|'all' */
+    /** @var 'open'|'field'|'pending_nurse'|'pending_final'|'qta'|'closed'|'cancelled'|'all' */
     #[Url(as: 'f')]
     public string $filter = 'open';
 
@@ -34,7 +34,7 @@ final class IncidentIndex extends Component
 
     public function setFilter(string $value): void
     {
-        $allowed = ['open', 'field', 'pending_nurse', 'qta', 'closed', 'cancelled', 'all'];
+        $allowed = ['open', 'field', 'pending_nurse', 'pending_final', 'qta', 'closed', 'cancelled', 'all'];
         if (in_array($value, $allowed, true)) {
             $this->filter = $value;
             $this->resetPage();
@@ -50,13 +50,14 @@ final class IncidentIndex extends Component
         OperationalIncidentVisibility::constrainListing($query, Auth::user());
 
         $query = match ($this->filter) {
-            'open' => $query->where('status', IncidentStatus::Open),
-            'field' => $query->whereIn('status', [IncidentStatus::Dispatched, IncidentStatus::InProgress]),
+            'open'          => $query->where('status', IncidentStatus::Open),
+            'field'         => $query->whereIn('status', [IncidentStatus::Dispatched, IncidentStatus::InProgress]),
             'pending_nurse' => $query->where('status', IncidentStatus::PendingNurseReport),
-            'qta' => $query->where('status', IncidentStatus::Qta),
-            'closed' => $query->where('status', IncidentStatus::Closed),
-            'cancelled' => $query->where('status', IncidentStatus::Cancelled),
-            default => $query,
+            'pending_final' => $query->where('status', IncidentStatus::PendingFinalReport),
+            'qta'           => $query->where('status', IncidentStatus::Qta),
+            'closed'        => $query->where('status', IncidentStatus::Closed),
+            'cancelled'     => $query->where('status', IncidentStatus::Cancelled),
+            default         => $query,
         };
 
         $incidents = $query->paginate(15);
@@ -78,13 +79,14 @@ final class IncidentIndex extends Component
         OperationalIncidentVisibility::constrainListing($base, Auth::user());
 
         return [
-            'open' => (clone $base)->where('status', IncidentStatus::Open)->count(),
-            'field' => (clone $base)->whereIn('status', [IncidentStatus::Dispatched, IncidentStatus::InProgress])->count(),
+            'open'          => (clone $base)->where('status', IncidentStatus::Open)->count(),
+            'field'         => (clone $base)->whereIn('status', [IncidentStatus::Dispatched, IncidentStatus::InProgress])->count(),
             'pending_nurse' => (clone $base)->where('status', IncidentStatus::PendingNurseReport)->count(),
-            'qta' => (clone $base)->where('status', IncidentStatus::Qta)->count(),
-            'closed' => (clone $base)->where('status', IncidentStatus::Closed)->count(),
-            'cancelled' => (clone $base)->where('status', IncidentStatus::Cancelled)->count(),
-            'all' => (clone $base)->count(),
+            'pending_final' => (clone $base)->where('status', IncidentStatus::PendingFinalReport)->count(),
+            'qta'           => (clone $base)->where('status', IncidentStatus::Qta)->count(),
+            'closed'        => (clone $base)->where('status', IncidentStatus::Closed)->count(),
+            'cancelled'     => (clone $base)->where('status', IncidentStatus::Cancelled)->count(),
+            'all'           => (clone $base)->count(),
         ];
     }
 }
