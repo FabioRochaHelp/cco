@@ -78,6 +78,88 @@
                 </div>
             </flux:card>
         </div>
+    @if ($modalityStats !== null)
+        @assets
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+        @endassets
+
+        @php
+            $slices     = $modalityStats['slices'];
+            $totalCount = $modalityStats['total'];
+        @endphp
+
+        <flux:card class="space-y-4">
+            <div>
+                <flux:heading size="lg">{{ __('Ocorrências por modalidade') }}</flux:heading>
+                <flux:text class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    {{ $modalityStats['month'] }} · {{ $totalCount }} {{ __('ocorrência(s) no seu escopo') }}
+                </flux:text>
+            </div>
+
+            @if ($totalCount === 0)
+                <flux:text class="text-zinc-500">{{ __('Nenhuma ocorrência registrada neste mês.') }}</flux:text>
+            @else
+                <div class="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+                    {{-- Donut Chart.js --}}
+                    <div
+                        class="relative shrink-0"
+                        x-data="{
+                            init() {
+                                new Chart(this.$refs.canvas, {
+                                    type: 'doughnut',
+                                    data: {
+                                        labels: {{ Js::from(array_column($slices, 'label')) }},
+                                        datasets: [{
+                                            data: {{ Js::from(array_column($slices, 'count')) }},
+                                            backgroundColor: {{ Js::from(array_column($slices, 'color')) }},
+                                            borderWidth: 2,
+                                            borderColor: document.documentElement.classList.contains('dark') ? '#18181b' : '#ffffff',
+                                            hoverBorderColor: 'transparent',
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: false,
+                                        cutout: '60%',
+                                        plugins: {
+                                            legend: { display: false },
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: (ctx) => ` ${ctx.parsed} ocorrência(s) (${ctx.dataset.data.reduce((a,b)=>a+b,0) > 0 ? Math.round(ctx.parsed / ctx.dataset.data.reduce((a,b)=>a+b,0) * 100) : 0}%)`
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        }"
+                    >
+                        <canvas x-ref="canvas" width="176" height="176"></canvas>
+                        <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-xl font-bold tabular-nums text-zinc-900 dark:text-zinc-50">{{ $totalCount }}</span>
+                            <span class="text-xs text-zinc-500">{{ __('total') }}</span>
+                        </div>
+                    </div>
+
+                    {{-- Legenda --}}
+                    <ul class="flex flex-1 flex-col justify-center gap-2">
+                        @foreach ($slices as $slice)
+                            <li class="flex items-center justify-between gap-3 text-sm">
+                                <div class="flex min-w-0 items-center gap-2">
+                                    <span class="size-3 shrink-0 rounded-sm" style="background-color:{{ $slice['color'] }}"></span>
+                                    <span class="truncate text-zinc-700 dark:text-zinc-300">{{ $slice['label'] }}</span>
+                                </div>
+                                <div class="flex shrink-0 items-center gap-2 tabular-nums">
+                                    <span class="font-semibold text-zinc-900 dark:text-zinc-50">{{ $slice['count'] }}</span>
+                                    <span class="w-10 text-end text-zinc-400">{{ $slice['percentage'] }}%</span>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+        </flux:card>
+    @endif
+
     @else
         <div class="flex h-full w-full flex-1 flex-col gap-4 rounded-xl">
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">

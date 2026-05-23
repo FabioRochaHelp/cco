@@ -73,6 +73,28 @@ final class IncidentPolicy
         return $user->canAccessOperationalMunicipio((int) $incident->municipio_id);
     }
 
+    public function cancel(User $user, Incident $incident): bool
+    {
+        if (! $user->hasOperationalAbility('incident.close')) {
+            return false;
+        }
+
+        if ($incident->status !== IncidentStatus::Open) {
+            return false;
+        }
+
+        if ($incident->municipio_id === null) {
+            return true;
+        }
+
+        return $user->canAccessOperationalMunicipio((int) $incident->municipio_id);
+    }
+
+    public function addObservation(User $user, Incident $incident): bool
+    {
+        return $this->viewOperational($user, $incident);
+    }
+
     public function createOperational(User $user, ?int $municipioId = null): bool
     {
         if (! $user->hasOperationalAbility('incident.create')) {

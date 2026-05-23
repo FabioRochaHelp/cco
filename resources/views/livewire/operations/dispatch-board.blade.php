@@ -22,6 +22,7 @@
             <section class="order-2 flex min-w-0 flex-col gap-4 lg:col-span-8 xl:col-span-8">
                 @include('livewire.operations.partials.open-incidents')
                 @include('livewire.operations.partials.dispatch-dispatch-modal')
+                @include('livewire.operations.partials.dispatch-incident-actions-modal')
             </section>
 
             <aside class="order-3 lg:col-span-2 xl:col-span-2">

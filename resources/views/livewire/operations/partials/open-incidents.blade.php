@@ -12,12 +12,16 @@
                         <th class="px-4 py-3 font-medium">{{ __('Quando') }}</th>
                         <th class="px-4 py-3 font-medium">{{ __('Endereço') }}</th>
                         <th class="px-4 py-3 font-medium">{{ __('Natureza') }}</th>
+                        <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200/95 dark:divide-slate-800/80">
                     @foreach ($openIncidents as $incident)
                         @php
                             $canDispatch = auth()->user()?->can('dispatchUnit', $incident);
+                            $canCancel = auth()->user()?->can('cancel', $incident);
+                            $canObserve = auth()->user()?->can('addObservation', $incident);
+                            $canView = auth()->user()?->can('view', $incident);
 
                             $risk = $incident->manchester_risk?->value;
                             $riskBar = match ($risk) {
@@ -60,6 +64,29 @@
                             <td class="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-400">{{ $incident->occurred_at->format('d/m/Y H:i') }}</td>
                             <td class="max-w-[22rem] truncate px-4 py-3 text-slate-700 dark:text-slate-300">{{ $incident->address_line ?? '—' }}</td>
                             <td class="max-w-[18rem] truncate px-4 py-3 text-slate-700 dark:text-slate-300">{{ $incident->nature?->name ?? '—' }}</td>
+                            <td class="px-2 py-3" @click.stop>
+                                <flux:dropdown>
+                                    <flux:button icon="ellipsis-horizontal" variant="ghost" size="sm" />
+                                    <flux:menu>
+                                        @if ($canView)
+                                            <flux:menu.item icon="eye" wire:click="openDetailModal({{ $incident->id }})">
+                                                {{ __('Ver ocorrência') }}
+                                            </flux:menu.item>
+                                        @endif
+                                        @if ($canObserve)
+                                            <flux:menu.item icon="chat-bubble-left-ellipsis" wire:click="openObservationModal({{ $incident->id }})">
+                                                {{ __('Inserir observação') }}
+                                            </flux:menu.item>
+                                        @endif
+                                        @if ($canCancel)
+                                            <flux:menu.separator />
+                                            <flux:menu.item icon="x-circle" variant="danger" wire:click="openCancelModal({{ $incident->id }})">
+                                                {{ __('Cancelar ocorrência') }}
+                                            </flux:menu.item>
+                                        @endif
+                                    </flux:menu>
+                                </flux:dropdown>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Operations;
 
 use App\Domain\Operations\Actions\AdvanceDispatchStageAction;
+use App\Domain\Operations\Actions\CancelIncidentAction;
 use App\Domain\Operations\Actions\CreateOperationalIncidentAction;
 use App\Domain\Operations\Actions\DispatchUnitAction;
 use App\Domain\Operations\Actions\ReleaseUnitAction;
@@ -12,6 +13,7 @@ use App\Domain\Operations\DTOs\AdvanceDispatchStageDTO;
 use App\Domain\Operations\DTOs\CreateIncidentDTO;
 use App\Domain\Operations\DTOs\DispatchUnitDTO;
 use App\Domain\Operations\DTOs\ReleaseUnitDTO;
+use App\Domain\Operations\Services\IncidentTimelineRecorder;
 use App\Domain\Operations\Enums\CallType;
 use App\Domain\Operations\Enums\DispatchStage;
 use App\Domain\Operations\Enums\IncidentReportModality;
@@ -44,6 +46,19 @@ final class DispatchBoard extends Component
     public ?int $dispatchingIncidentId = null;
 
     public ?int $modalVehicleId = null;
+
+    /** Modais de ação na fila: cancelar, observação, detalhe. */
+    public bool $showCancelModal = false;
+
+    public bool $showObservationModal = false;
+
+    public bool $showDetailModal = false;
+
+    public ?int $actionIncidentId = null;
+
+    public string $cancelReason = '';
+
+    public string $observationText = '';
 
     /** ID numérico em `municipios` para usuários centrais (sessão). */
     public ?string $selectedOperationalMunicipioId = null;
@@ -246,6 +261,125 @@ final class DispatchBoard extends Component
         }
     }
 
+    public function openCancelModal(int $incidentId): void
+    {
+        $incident = Incident::query()->find($incidentId);
+        if ($incident === null) {
+            return;
+        }
+
+        Gate::authorize('cancel', $incident);
+
+        $this->actionIncidentId = $incidentId;
+        $this->cancelReason = '';
+        $this->resetErrorBag();
+        $this->showCancelModal = true;
+    }
+
+    public function cancelIncident(CancelIncidentAction $action): void
+    {
+        $this->resetErrorBag();
+
+        $this->validate(
+            ['cancelReason' => ['required', 'string', 'min:5', 'max:500']],
+            ['cancelReason.required' => __('Informe o motivo do cancelamento.'), 'cancelReason.min' => __('O motivo deve ter ao menos 5 caracteres.')],
+        );
+
+        if ($this->actionIncidentId === null) {
+            $this->showCancelModal = false;
+            return;
+        }
+
+        /** @var Incident|null $incident */
+        $incident = Incident::query()->find($this->actionIncidentId);
+        if ($incident === null) {
+            $this->showCancelModal = false;
+            return;
+        }
+
+        Gate::authorize('cancel', $incident);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $action->execute($incident, $this->cancelReason, $user);
+
+        $this->boardMessage = __('Ocorrência cancelada.');
+        $this->showCancelModal = false;
+        $this->actionIncidentId = null;
+        $this->cancelReason = '';
+    }
+
+    public function openObservationModal(int $incidentId): void
+    {
+        $incident = Incident::query()->find($incidentId);
+        if ($incident === null) {
+            return;
+        }
+
+        Gate::authorize('addObservation', $incident);
+
+        $this->actionIncidentId = $incidentId;
+        $this->observationText = '';
+        $this->resetErrorBag();
+        $this->showObservationModal = true;
+    }
+
+    public function saveObservation(IncidentTimelineRecorder $recorder): void
+    {
+        $this->resetErrorBag();
+
+        $this->validate(
+            ['observationText' => ['required', 'string', 'min:3', 'max:2000']],
+            ['observationText.required' => __('Informe o texto da observação.')],
+        );
+
+        if ($this->actionIncidentId === null) {
+            $this->showObservationModal = false;
+            return;
+        }
+
+        /** @var Incident|null $incident */
+        $incident = Incident::query()->find($this->actionIncidentId);
+        if ($incident === null) {
+            $this->showObservationModal = false;
+            return;
+        }
+
+        Gate::authorize('addObservation', $incident);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $recorder->record($incident, 'incident_observation', ['text' => $this->observationText], $user);
+
+        $this->boardMessage = __('Observação registrada.');
+        $this->showObservationModal = false;
+        $this->actionIncidentId = null;
+        $this->observationText = '';
+    }
+
+    public function openDetailModal(int $incidentId): void
+    {
+        $incident = Incident::query()->find($incidentId);
+        if ($incident === null) {
+            return;
+        }
+
+        Gate::authorize('view', $incident);
+
+        $this->actionIncidentId = $incidentId;
+        $this->showDetailModal = true;
+    }
+
+    public function closeActionModals(): void
+    {
+        $this->showCancelModal = false;
+        $this->showObservationModal = false;
+        $this->showDetailModal = false;
+        $this->actionIncidentId = null;
+        $this->cancelReason = '';
+        $this->observationText = '';
+    }
+
     public function render(): View
     {
         $municipioOptions = Auth::user()?->isOperationalCentral()
@@ -255,7 +389,7 @@ final class DispatchBoard extends Component
         $mid = OperationalMunicipioSelection::current(Auth::user());
 
         $openIncidentsQuery = Incident::query()
-            ->with(['nature'])
+            ->with(['nature', 'municipio'])
             ->where('status', IncidentStatus::Open);
 
         OperationalIncidentVisibility::constrainListing($openIncidentsQuery, Auth::user());
@@ -332,6 +466,10 @@ final class DispatchBoard extends Component
             )
             : collect();
 
+        $actionIncident = $this->actionIncidentId !== null
+            ? Incident::query()->with(['nature', 'municipio'])->find($this->actionIncidentId)
+            : null;
+
         return view('livewire.operations.dispatch-board', [
             'municipioOptions' => $municipioOptions,
             'openIncidents' => $openIncidents,
@@ -344,6 +482,7 @@ final class DispatchBoard extends Component
             'orderedStages' => DispatchStage::ordered(),
             'recentTimeline' => $recentTimeline,
             'stats' => $stats,
+            'actionIncident' => $actionIncident,
         ]);
     }
 }
