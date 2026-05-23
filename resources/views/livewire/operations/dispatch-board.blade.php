@@ -68,6 +68,15 @@
                 </div>
                 <div class="cco-surface-subtitle">{{ __('Camadas táticas e últimos eventos.') }}</div>
             </div>
+            <flux:button
+                href="{{ route('operations.tactical-map') }}"
+                icon="arrow-top-right-on-square"
+                size="sm"
+                variant="ghost"
+                target="_blank"
+            >
+                {{ __('Abrir mapa em nova guia') }}
+            </flux:button>
         </div>
 
         @include('livewire.operations.partials.map-and-feed')

@@ -10,6 +10,7 @@ use App\Livewire\Operations\Admin\SystemUserManage;
 use App\Livewire\Operations\Cadastro\MunicipioManage;
 use App\Livewire\Operations\Cadastro\ShiftManage;
 use App\Livewire\Operations\DispatchBoard;
+use App\Livewire\Operations\TacticalMap;
 use App\Livewire\Operations\FleetShifts;
 use App\Livewire\Operations\IncidentCallStart;
 use App\Livewire\Operations\IncidentCreate;
@@ -87,6 +88,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::redirect('catalog/staff', '/operations/cadastro/efetivo')->name('operations.catalog.staff');
 
             Route::get('/dispatch', DispatchBoard::class)->name('operations.dispatch');
+            Route::get('/tactical-map', TacticalMap::class)->name('operations.tactical-map');
             Route::get('/incidents', IncidentIndex::class)->name('operations.incidents.index');
             Route::get('/incidents/start', IncidentCallStart::class)->name('operations.incidents.start');
             Route::get('/incidents/{incident}/victims/create', VictimRecord::class)->name('operations.incidents.victims.create');
