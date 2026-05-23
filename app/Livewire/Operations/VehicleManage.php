@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Operations;
 
+use App\Integrations\Traccar\TraccarService;
 use App\Models\Municipio;
 use App\Models\Vehicle;
 use App\Support\Operations\OperationalMunicipioSelection;
@@ -38,17 +39,38 @@ final class VehicleManage extends Component
 
     public string $message = '';
 
+    /** @var array<int, array{id: int, name: string, uniqueId: string, status: string}> */
+    public array $traccarDeviceList = [];
+
+    public bool $traccarAvailable = false;
+
     /** Base escolhida na central (espelha sessão `operational_municipio_id`). */
     public ?string $selectedOperationalMunicipioId = null;
 
-    public function mount(): void
+    public function mount(TraccarService $traccar): void
     {
         Gate::authorize('viewAny', Vehicle::class);
+
         $user = Auth::user();
         if ($user !== null && $user->isOperationalCentral()) {
             $this->selectedOperationalMunicipioId = session('operational_municipio_id') !== null
                 ? (string) session('operational_municipio_id')
                 : null;
+        }
+
+        try {
+            $this->traccarDeviceList = $traccar->devices()
+                ->map(fn ($d) => [
+                    'id' => $d->id,
+                    'name' => $d->name,
+                    'uniqueId' => $d->uniqueId,
+                    'status' => $d->status,
+                ])
+                ->all();
+            $this->traccarAvailable = true;
+        } catch (\Throwable) {
+            $this->traccarDeviceList = [];
+            $this->traccarAvailable = false;
         }
     }
 
@@ -189,6 +211,8 @@ final class VehicleManage extends Component
             'operationalMunicipios' => Auth::user()?->isOperationalCentral()
                 ? Municipio::query()->where('active', true)->orderBy('razao_social')->get()
                 : collect(),
+            'traccarDevices' => collect($this->traccarDeviceList),
+            'traccarAvailable' => $this->traccarAvailable,
         ]);
     }
 }

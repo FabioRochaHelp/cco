@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Operations\IncidentCallIntakeWebhookController;
+use App\Http\Controllers\Operations\IncidentRouteController;
+use App\Http\Controllers\Operations\MapVehiclesController;
 use App\Livewire\Dashboard;
 use App\Livewire\Operations\Admin\SystemUserManage;
 use App\Livewire\Operations\Cadastro\MunicipioManage;
@@ -93,6 +95,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/prescriptions/{prescription}/approval', PrescriptionApproval::class)->name('operations.prescriptions.approval');
             Route::get('/incidents/{incident}/nurse-report', IncidentNurseReport::class)->name('operations.incidents.nurse-report');
             Route::get('/incidents/{incident}/final-report', IncidentFinalReport::class)->name('operations.incidents.final-report');
+            Route::get('/map/vehicles', MapVehiclesController::class)->name('operations.map.vehicles');
+            Route::get('/incidents/{incident}/route', IncidentRouteController::class)->name('operations.incidents.route');
             Route::get('/incidents/{incident}', IncidentOperationalDetail::class)->name('operations.incidents.show');
             Route::get('/fleet', FleetShifts::class)->name('operations.fleet');
         });

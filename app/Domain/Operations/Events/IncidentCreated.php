@@ -41,12 +41,15 @@ final class IncidentCreated implements ShouldBroadcast, ShouldDispatchAfterCommi
     public function broadcastWith(): array
     {
         return [
-            'incident_id' => $this->incident->id,
-            'municipio_id' => $this->incident->municipio_id,
-            'talao' => $this->incident->talao,
+            'incident_id'   => $this->incident->id,
+            'municipio_id'  => $this->incident->municipio_id,
+            'talao'         => $this->incident->talao,
             'dispatch_year' => $this->incident->dispatch_year,
-            'status' => $this->incident->status->value,
+            'status'        => $this->incident->status->value,
             'manchester_risk' => $this->incident->manchester_risk?->value,
+            'lat'           => $this->incident->latitude ? (float) $this->incident->latitude : null,
+            'lng'           => $this->incident->longitude ? (float) $this->incident->longitude : null,
+            'nature'        => $this->incident->nature?->name,
         ];
     }
 }

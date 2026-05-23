@@ -1,22 +1,76 @@
 @php
     use App\Support\Operations\TimelineEventLabels;
+    $incidentUrlTemplate = url('/operations/incidents/__ID__');
 @endphp
 
 <div class="grid gap-4 xl:grid-cols-2">
-    <flux:card class="relative flex min-h-[18rem] flex-col justify-center overflow-hidden">
-        <flux:subheading class="mb-2">{{ __('Mapa tático') }}</flux:subheading>
-        <flux:text size="sm" class="mb-4 max-w-prose text-zinc-600 dark:text-zinc-400">
-            {{ __('Área reservada para Leaflet/OpenStreetMap, marcadores de ocorrências e posição das viaturas (Traccar / Reverb).') }}
-        </flux:text>
+
+    {{-- ── Mapa tático ──────────────────────────────────────────────────── --}}
+    <flux:card class="flex min-h-[22rem] flex-col gap-3">
+
+        {{-- Cabeçalho + legenda — atualizados pelo wire:poll normalmente --}}
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <flux:subheading>{{ __('Mapa tático') }}</flux:subheading>
+            <div class="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+                <span class="inline-flex items-center gap-1">
+                    <span class="inline-block h-2.5 w-2.5 rounded-full bg-red-500"></span>{{ __('Ocorrência aberta') }}
+                </span>
+                <span class="inline-flex items-center gap-1">
+                    <span class="inline-block h-2.5 w-2.5 rounded-full bg-blue-600"></span>{{ __('Despachada') }}
+                </span>
+                <span class="inline-flex items-center gap-1">
+                    <span class="inline-block h-2.5 w-2.5 rounded-full bg-green-500"></span>{{ __('Viatura em movimento') }}
+                </span>
+                <span class="inline-flex items-center gap-1">
+                    <span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-400"></span>{{ __('Parada') }}
+                </span>
+            </div>
+        </div>
+
+        {{-- Contadores — fora do wire:ignore, atualizados pelo poll --}}
+        <div class="flex flex-wrap gap-2 text-xs text-zinc-500">
+            @if ($mapIncidents->isNotEmpty())
+                <span class="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 dark:border-zinc-700 dark:bg-zinc-800">
+                    {{ $mapIncidents->count() }} {{ __('ocorrência(s) no mapa') }}
+                </span>
+            @endif
+            @if ($mapVehicles->isNotEmpty())
+                <span class="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 dark:border-zinc-700 dark:bg-zinc-800">
+                    {{ $mapVehicles->count() }} {{ __('viatura(s) rastreada(s)') }}
+                </span>
+            @endif
+            @if ($mapIncidents->isEmpty() && $mapVehicles->isEmpty())
+                <span class="text-zinc-400">{{ __('Sem coordenadas disponíveis') }}</span>
+            @endif
+        </div>
+
+        {{--
+            wire:ignore — Livewire NÃO toca neste bloco durante re-renders.
+            O Leaflet inicializa uma vez e persiste. Atualizações vêm via Reverb:
+            - vehicle.position.updated  → move marcador de viatura
+            - incident.created          → adiciona marcador vermelho
+            - unit.dispatched           → muda marcador para azul
+            - unit.released             → remove marcador encerrado
+        --}}
         <div
-            class="flex flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50/50 dark:border-zinc-600 dark:bg-zinc-900/30"
-            aria-hidden="true"
+            wire:ignore
+            x-data="dispatchMap({
+                incidents:       {{ Js::from($mapIncidents) }},
+                vehicles:        {{ Js::from($mapVehicles) }},
+                incidentUrlBase: '{{ $incidentUrlTemplate }}',
+                vehiclesUrl:     '{{ route('operations.map.vehicles') }}'
+            })"
+            class="relative flex flex-1 flex-col"
         >
-            <flux:icon.map-pin class="size-12 text-zinc-400" />
-            <flux:text class="mt-2 text-zinc-500">{{ __('Camada de mapa — próxima integração') }}</flux:text>
+            <div
+                x-ref="dispatchMapEl"
+                class="min-h-[18rem] flex-1 rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800"
+                style="z-index:0"
+            ></div>
         </div>
     </flux:card>
 
+    {{-- ── Feed de eventos ──────────────────────────────────────────────── --}}
     <flux:card class="flex flex-col gap-3">
         <flux:subheading>{{ __('Últimos eventos operacionais') }}</flux:subheading>
         @if ($recentTimeline->isEmpty())

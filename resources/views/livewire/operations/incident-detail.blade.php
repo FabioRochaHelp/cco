@@ -228,16 +228,84 @@
     </flux:card>
 
     <div class="grid gap-4 xl:grid-cols-2">
-        <flux:card class="relative flex min-h-[16rem] flex-col justify-center">
-            <flux:subheading class="mb-2">{{ __('Mapa da ocorrência') }}</flux:subheading>
-            <flux:text size="sm" class="mb-4 text-zinc-600 dark:text-zinc-400">
-                {{ __('Rota e markers — Leaflet + Traccar quando device_id e intervalo estiverem completos.') }}
-            </flux:text>
+        @php
+            $routeDispatch = $incident->dispatches->whereNull('deleted_at')->sortByDesc('id')->first();
+            $routeVehicle  = $routeDispatch?->shift?->vehicle;
+            $hasDevice     = $routeVehicle?->device_id !== null;
+        @endphp
+        <flux:card class="flex min-h-[22rem] flex-col">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <flux:subheading>{{ __('Percurso da viatura') }}</flux:subheading>
+                <div class="flex items-center gap-2 text-xs text-zinc-500">
+                    @if ($hasDevice)
+                        <span class="inline-flex items-center gap-1">
+                            <span class="inline-block h-2 w-2 rounded-full bg-blue-500"></span>
+                            {{ $routeVehicle->prefix ?? '' }} · Device {{ $routeVehicle->device_id }}
+                        </span>
+                    @elseif ($routeVehicle)
+                        <span class="text-amber-600">{{ __('Viatura sem device Traccar') }}</span>
+                    @else
+                        <span>{{ __('Sem viatura despachada') }}</span>
+                    @endif
+                </div>
+            </div>
+
             <div
-                class="flex flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50/50 dark:border-zinc-600 dark:bg-zinc-900/30"
+                x-data="incidentRouteMap({
+                    routeUrl: '{{ route('operations.incidents.route', $incident) }}',
+                    incidentLat: '{{ $incident->latitude }}',
+                    incidentLng: '{{ $incident->longitude }}',
+                    hasDevice: {{ $hasDevice ? 'true' : 'false' }},
+                    vehiclePrefix: '{{ $routeVehicle?->prefix }}'
+                })"
+                class="relative flex flex-1 flex-col"
             >
-                <flux:icon.map class="size-10 text-zinc-400" />
-                <flux:text class="mt-2 text-zinc-500">{{ __('Camada de mapa') }}</flux:text>
+                {{-- Mapa --}}
+                <div
+                    x-ref="routeMapEl"
+                    class="min-h-[18rem] flex-1 rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800"
+                    style="z-index:0"
+                ></div>
+
+                {{-- Legenda de estado sobre o mapa --}}
+                <div
+                    x-show="state === 'loading'"
+                    class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-white/70 dark:bg-zinc-900/70"
+                >
+                    <flux:text class="text-zinc-500">{{ __('Carregando rota do Traccar…') }}</flux:text>
+                </div>
+
+                <div
+                    x-show="state === 'empty'"
+                    class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-white/80 dark:bg-zinc-900/80"
+                >
+                    <flux:icon.map-pin class="size-8 text-zinc-400" />
+                    <flux:text class="mt-2 text-zinc-500">{{ __('Sem pontos de rota no intervalo da ocorrência.') }}</flux:text>
+                </div>
+
+                <div
+                    x-show="state === 'no_device'"
+                    class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-white/80 dark:bg-zinc-900/80"
+                >
+                    <flux:icon.signal-slash class="size-8 text-zinc-400" />
+                    <flux:text class="mt-2 text-zinc-500">{{ __('Viatura sem device Traccar vinculado.') }}</flux:text>
+                </div>
+
+                <div
+                    x-show="state === 'error'"
+                    class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-white/80 dark:bg-zinc-900/80"
+                >
+                    <flux:icon.exclamation-triangle class="size-8 text-amber-400" />
+                    <flux:text class="mt-2 text-zinc-500">{{ __('Não foi possível carregar a rota.') }}</flux:text>
+                </div>
+
+                {{-- Legenda visual --}}
+                <div x-show="state === 'loaded'" class="mt-2 flex flex-wrap gap-3 text-xs text-zinc-500">
+                    <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full bg-red-500"></span>{{ __('Local') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full bg-green-500"></span>{{ __('Saída da base') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="inline-block h-[3px] w-5 rounded bg-blue-500"></span>{{ __('Percurso') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full bg-amber-400"></span>{{ __('Retorno') }}</span>
+                </div>
             </div>
         </flux:card>
 

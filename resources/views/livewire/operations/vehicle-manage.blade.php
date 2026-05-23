@@ -45,7 +45,22 @@
                 <flux:input wire:model="make" :label="__('Marca')" />
                 <flux:input wire:model="model" :label="__('Modelo')" />
                 <flux:input wire:model.number="year" type="number" :label="__('Ano')" />
-                <flux:input wire:model="device_id" :label="__('Device ID (Traccar)')" />
+
+                @if ($traccarAvailable && $traccarDevices->isNotEmpty())
+                    <flux:select wire:model="device_id" :label="__('Device Traccar')" placeholder="{{ __('Nenhum') }}">
+                        <flux:select.option value="">{{ __('— sem vínculo —') }}</flux:select.option>
+                        @foreach ($traccarDevices as $device)
+                            <flux:select.option value="{{ $device['id'] }}">
+                                {{ $device['name'] }} ({{ $device['uniqueId'] }})
+                                @if ($device['status'] === 'online') ● @endif
+                            </flux:select.option>
+                        @endforeach
+                    </flux:select>
+                @else
+                    <flux:input wire:model="device_id" :label="__('Device ID (Traccar)')"
+                        :description="$traccarAvailable ? __('Nenhum device encontrado no Traccar.') : __('Traccar indisponível — insira o ID manualmente.')" />
+                @endif
+
                 <flux:input wire:model.number="status_legacy" type="number" :label="__('Status legado (opcional)')" />
                 <div class="flex flex-wrap gap-2 md:col-span-2 lg:col-span-3">
                     <flux:button type="submit" variant="primary">{{ $editingId ? __('Salvar') : __('Incluir') }}</flux:button>
@@ -76,7 +91,26 @@
                             <td class="px-4 py-3 font-medium">{{ $v->prefix ?? '—' }}</td>
                             <td class="px-4 py-3">{{ $v->plate ?? '—' }}</td>
                             <td class="px-4 py-3 text-zinc-600">{{ trim(implode(' ', array_filter([$v->make, $v->model]))) ?: '—' }}</td>
-                            <td class="px-4 py-3 font-mono text-xs text-zinc-500">{{ $v->device_id ?? '—' }}</td>
+                            <td class="px-4 py-3 text-xs text-zinc-500">
+                            @if ($v->device_id)
+                                @php
+                                    $dev = $traccarDevices->firstWhere('id', (int) $v->device_id);
+                                @endphp
+                                @if ($dev)
+                                    <span class="font-medium text-zinc-700 dark:text-zinc-200">{{ $dev['name'] }}</span>
+                                    <span class="ml-1 font-mono text-zinc-400">#{{ $dev['uniqueId'] }}</span>
+                                    @if ($dev['status'] === 'online')
+                                        <span class="ml-1 inline-block h-2 w-2 rounded-full bg-green-500" title="{{ __('Online') }}"></span>
+                                    @else
+                                        <span class="ml-1 inline-block h-2 w-2 rounded-full bg-zinc-400" title="{{ $dev['status'] }}"></span>
+                                    @endif
+                                @else
+                                    <span class="font-mono">{{ $v->device_id }}</span>
+                                @endif
+                            @else
+                                —
+                            @endif
+                        </td>
                             <td class="px-4 py-3 text-end">
                                 <div class="flex items-center justify-end gap-1">
                                     @can('update', $v)

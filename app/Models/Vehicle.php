@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToMunicipio;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Vehicle extends Model
@@ -27,5 +28,10 @@ class Vehicle extends Model
     public function shifts(): HasMany
     {
         return $this->hasMany(Shift::class);
+    }
+
+    public function position(): HasOne
+    {
+        return $this->hasOne(VehiclePosition::class);
     }
 }

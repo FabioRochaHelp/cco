@@ -39,11 +39,14 @@ final class UnitDispatched implements ShouldBroadcast, ShouldDispatchAfterCommit
     public function broadcastWith(): array
     {
         return [
-            'incident_id' => $this->incident->id,
-            'municipio_id' => $this->incident->municipio_id,
-            'dispatch_id' => $this->dispatch->id,
-            'shift_id' => $this->dispatch->shift_id,
-            'stage' => $this->dispatch->stage->value,
+            'incident_id'   => $this->incident->id,
+            'municipio_id'  => $this->incident->municipio_id,
+            'dispatch_id'   => $this->dispatch->id,
+            'shift_id'      => $this->dispatch->shift_id,
+            'stage'         => $this->dispatch->stage->value,
+            'status'        => $this->incident->status->value,
+            'lat'           => $this->incident->latitude ? (float) $this->incident->latitude : null,
+            'lng'           => $this->incident->longitude ? (float) $this->incident->longitude : null,
         ];
     }
 }
