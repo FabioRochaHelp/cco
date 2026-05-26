@@ -30,7 +30,7 @@ class OperationalDemoSeeder extends Seeder
         $typeMunicipal = UserType::query()->create(['name' => 'Operador municipal']);
 
         $municipio = Municipio::query()->create([
-            'razao_social' => 'SAMU 192 — Base demonstração',
+            'razao_social' => 'CCO — Base demonstração',
             'cnpj' => '00.000.000/0001-91',
             'ie' => '123456789',
             'phone' => '(11) 99999-0000',
